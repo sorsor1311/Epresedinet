@@ -1,0 +1,13 @@
+{
+  "name": "epresedi",
+  "private": true,
+  "description": "EPRESEDI S.A.S. · Sistema de gestión inmobiliaria (atajos para backend + frontend)",
+  "scripts": {
+    "instalar": "npm --prefix backend install && npm --prefix frontend install",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "diagnostico": "npm --prefix backend run diagnostico",
+    "db:instalar": "npm --prefix backend run db:instalar",
+    "test": "npm --prefix backend test"
+  }
+}
