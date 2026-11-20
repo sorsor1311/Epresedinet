@@ -12,7 +12,6 @@ const FIRMAS = [
 ];
 const recibir = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 8 } }).array('fotos', 8);
 
-/** Guarda las imágenes validando su contenido real (no solo la extensión). Devuelve las rutas públicas. */
 function guardarImagenes(archivos = []) {
   const carpeta = path.join(env.uploadsDir, 'propiedades');
   fs.mkdirSync(carpeta, { recursive: true });

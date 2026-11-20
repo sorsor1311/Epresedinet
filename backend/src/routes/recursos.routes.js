@@ -1,4 +1,3 @@
-/** API REST de contratos, pagos, remodelaciones, visitas y personas (solo personal). */
 const router = require('express').Router();
 const r = require('../controllers/recursosController');
 const { gestion, soloAdmin } = require('../middlewares/authMiddleware');

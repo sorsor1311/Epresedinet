@@ -1,4 +1,4 @@
-const notFound = (req, res, next) => {
+﻿const notFound = (req, res, next) => {
   const error = new Error(`No encontrado - ${req.originalUrl}`);
   error.statusCode = 404;
   next(error);
@@ -12,19 +12,27 @@ function traducirErrorBD(err) {
     case 'ER_DUP_ENTRY':
       return { statusCode: 409, message: 'Ya existe un registro con esos datos' };
     case 'ER_ROW_IS_REFERENCED_2':
-      return { statusCode: 409, message: 'No se puede eliminar: tiene registros asociados (contratos, citas, etc.). Márcalo como inactivo.' };
+      return { statusCode: 409, message: 'No se puede eliminar: tiene registros asociados (contratos, citas, etc.). MÃ¡rcalo como inactivo.' };
     case 'ER_NO_REFERENCED_ROW_2':
       return { statusCode: 400, message: 'Uno de los datos relacionados no existe' };
     case 'ER_TRUNCATED_WRONG_VALUE':
     case 'ER_WRONG_VALUE':
     case 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD':
-      return { statusCode: 400, message: 'Formato de dato inválido (revisa fechas y números)' };
+      return { statusCode: 400, message: 'Formato de dato invÃ¡lido (revisa fechas y nÃºmeros)' };
     default:
       return null;
   }
 }
 
 const errorHandler = (err, req, res, next) => {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+    err.statusCode = 400;
+    err.message = 'La fotografía no puede superar los 5 MB';
+  } else if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
+    err.statusCode = 400;
+    err.message = 'Solo puedes subir una fotografía de perfil';
+  }
+
   const traducido = traducirErrorBD(err);
   const statusCode = err.statusCode || traducido?.statusCode || 500;
   if (statusCode >= 500) console.error('[Error]', err);
@@ -37,3 +45,4 @@ const errorHandler = (err, req, res, next) => {
 };
 
 module.exports = { notFound, errorHandler };
+

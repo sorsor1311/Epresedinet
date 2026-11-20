@@ -20,7 +20,7 @@ exports.buscar = ejecutar(async (req, res) => {
   res.json({ success: true, data: propiedades });
 });
 
-/** Recomendaciones a partir del historial (por cuenta si inició sesión; por sesión de navegador si no). */
+
 async function similaresPara({ usuario, sesion, excluir = [] }) {
   const [historial] = usuario
     ? await pool.execute('SELECT * FROM busquedas WHERE fk_usuario = ? OR sesion = ? ORDER BY id_busqueda DESC LIMIT 10', [usuario.id_usuario, sesion || ''])

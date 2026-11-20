@@ -1,4 +1,4 @@
-/** API REST de las entidades de operación: contratos, pagos, remodelaciones, visitas y personas. */
+/** API REST de las entidades de operación*/
 const pool = require('../config/db');
 const { fallo, ejecutar } = require('../utils/errores');
 const { agenteDe } = require('../services/citasService');
@@ -72,7 +72,6 @@ exports.eliminar = ejecutar(async (req, res) => {
   res.json({ success: true });
 });
 
-// El administrador registra propietarios (necesarios para asociar inmuebles) y clientes.
 const crearPerfil = rol => ejecutar(async (req, res) => {
   const c = await crearCuenta({ rol, ...req.body });
   await auditar(req.usuario, 'crear', rol.toLowerCase(), c.id_perfil, req.body.nombre);

@@ -3,6 +3,7 @@
  *   1) Arranca el backend (npm start)   2) ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run prueba:api
  * Crea sus propios datos de prueba (sufijo aleatorio) y no depende de fechas fijas.
  */
+import 'dotenv/config';
 const BASE = (process.env.API_URL || 'http://localhost:5000') + '/api';
 const ADMIN = { correo: process.env.ADMIN_EMAIL || 'admin@epresedi.com', password: process.env.ADMIN_PASSWORD || 'ClaveSegura1' };
 const sufijo = Math.random().toString(36).slice(2, 8), CLAVE = 'ClaveSegura1';

@@ -3,7 +3,6 @@ const { fallo } = require('../utils/errores');
 
 const sinAcentos = texto => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
-/** Agrega a cada inmueble su galería (`fotos`), con la portada primero. */
 async function adjuntarFotos(filas) {
   if (!filas.length) return filas;
   const [fotos] = await pool.query('SELECT fk_propiedad, url FROM propiedad_fotos WHERE fk_propiedad IN (?) ORDER BY fk_propiedad, orden, id_foto', [filas.map(f => f.id_propiedad)]);
@@ -16,7 +15,6 @@ async function adjuntarFotos(filas) {
   });
 }
 
-/** Compatibilidad (0-100) de un inmueble con la búsqueda: precio 50 · zona 30 · tipo 20 (el tipo ya se filtró). */
 function puntuar(p, { modalidad, presupuesto, tolerancia = 1.15, zona = '' }) {
   const precio = Number(modalidad === 'arriendo' ? p.precio_arrendamiento : p.precio_venta);
   const exceso = Math.max(0, precio - presupuesto) / (presupuesto * (tolerancia - 1) || 1);
@@ -28,8 +26,6 @@ function puntuar(p, { modalidad, presupuesto, tolerancia = 1.15, zona = '' }) {
 
 /**
  * RF002: inmuebles que mejor coinciden con lo que busca el cliente.
- * Filtros duros: disponible, modalidad con precio, tipo (si lo indicó) y presupuesto (+tolerancia).
- * Compatibilidad (0-100): precio 50 · zona 30 · tipo 20.
  */
 async function buscarInmuebles(filtros, { excluir = [], tolerancia = 1.15, limite = 10 } = {}) {
   const modalidad = filtros.modalidad === 'arriendo' ? 'arriendo' : 'compra';

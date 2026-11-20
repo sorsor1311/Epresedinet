@@ -5,5 +5,5 @@ router.use('/auth', require('./auth.routes'));
 router.use('/atencion', require('./atencion.routes'));
 router.use('/portal', require('./portal.routes'));
 router.use('/', require('./propiedades.routes'));
-router.use('/', require('./recursos.routes'));   // debe ir al final: contiene rutas genéricas /:recurso
+router.use('/', require('./recursos.routes')); 
 module.exports = router;

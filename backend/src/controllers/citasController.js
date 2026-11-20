@@ -6,7 +6,6 @@ const C = require('../services/citasService');
 const { notificar, mensajes } = require('../services/notificationService');
 const { auditar } = require('../services/auditoriaService');
 
-// ---------- Cliente (público) ----------
 exports.registrarInteresado = ejecutar(async (req, res) => {
   const id = await C.guardarInteresado(req.body, req.usuario?.id_usuario ?? null);
   const enviada = await notificar(req.body.correo, 'EPRESEDI: datos recibidos', mensajes.datosRecibidos(String(req.body.nombre).trim()));
@@ -47,7 +46,6 @@ exports.gestionarPorCodigo = ejecutar(async (req, res) => {
   res.json({ success: true, message: accion === 'cancelar' ? 'Tu cita fue cancelada' : 'Tu cita fue reprogramada', data: { fecha_contacto: nueva } });
 });
 
-// ---------- Personal ----------
 exports.yo = ejecutar(async (req, res) => res.json({ success: true, data: { rol: req.usuario.rol, id_agente: await C.agenteDe(req.usuario) } }));
 
 /** Calendario: el asesor ve solo su agenda; el administrador la de todos (y puede filtrar por asesor). */

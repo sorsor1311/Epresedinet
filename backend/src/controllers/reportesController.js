@@ -1,4 +1,4 @@
-/** Reportes y análisis de atención (RF018, RF015) · notificaciones y auditoría. */
+/** Reportes y análisis de atención (RF018, RF015)*/
 const pool = require('../config/db');
 const { ejecutar } = require('../utils/errores');
 const { sumarDias } = require('../services/agendaService');
@@ -28,7 +28,6 @@ exports.reportes = ejecutar(async (req, res) => {
   res.json({ success: true, data: { total, porEstado, propiedades, agentes: agentes.map(a => ({ ...a, citas: Number(a.citas), atendidas: Number(a.atendidas) })), proximos } });
 });
 
-/** Análisis de demanda y gestión: series temporales, embudo comercial y preferencias de los clientes. */
 exports.analisis = ejecutar(async (req, res) => {
   const dias = Math.min(365, Math.max(7, Number(req.query.dias) || 30));
   const [serie] = await pool.query(`SELECT DATE_FORMAT(creada_en, '%Y-%m-%d') AS dia, COUNT(*) AS solicitudes, SUM(estado = 'atendida') AS atendidas, SUM(estado = 'cancelada') AS canceladas

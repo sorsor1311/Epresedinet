@@ -26,7 +26,6 @@ app.use('/uploads', express.static(env.uploadsDir, { maxAge: '7d', fallthrough: 
 app.use('/api', require('./routes'));
 app.use('/api', notFound);
 
-// Producción: el mismo servidor entrega el sitio web ya compilado (npm run build en /frontend).
 if (fs.existsSync(path.join(env.frontendDist, 'index.html'))) {
   app.locals.sirveFrontend = true;
   app.use(express.static(env.frontendDist, { maxAge: '1h', index: false }));

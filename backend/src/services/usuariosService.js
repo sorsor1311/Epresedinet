@@ -6,14 +6,11 @@ const ROLES = ['Administrador', 'Agente', 'Propietario', 'Cliente'];
 const TABLA_PERFIL = { Agente: 'agentes', Propietario: 'propietarios', Cliente: 'clientes' };
 const HORARIO_BASE = [[1, 2, 3, 4, 5], [['08:00', '12:00'], ['14:00', '18:00']]];
 
-/**
- * Crea una cuenta de acceso con su perfil. Si ya existía un perfil sin cuenta con el mismo correo
- * (por ejemplo, registros cargados desde el modelo .mwb original), lo VINCULA en lugar de duplicarlo.
- */
-async function crearCuenta({ rol, usuario, correo, password, nombre, telefono, profesion }, externa = null) {
+async function crearCuenta({ rol, usuario, correo, password, nombre, telefono, profesion, correoVerificado = true }, externa = null) {
   if (!ROLES.includes(rol)) throw fallo('Rol inválido');
   if (!String(usuario || '').trim() || !String(nombre || '').trim() && rol !== 'Administrador') throw fallo('Faltan usuario o nombre');
-  if (!correoValido(correo)) throw fallo('Correo electrónico inválido');
+  const correoNormalizado = String(correo || '').trim().toLowerCase();
+  if (!correoValido(correoNormalizado)) throw fallo('Correo electrónico inválido');
   if (!password || password.length < 8) throw fallo('La contraseña debe tener al menos 8 caracteres');
   if (rol !== 'Administrador' && !telefonoValido(telefono)) throw fallo('El teléfono debe contener 10 dígitos');
   if (rol === 'Cliente' && !String(profesion || '').trim()) throw fallo('La profesión es obligatoria');
@@ -21,7 +18,10 @@ async function crearCuenta({ rol, usuario, correo, password, nombre, telefono, p
   const conexion = externa || await pool.getConnection();
   try {
     if (!externa) await conexion.beginTransaction();
-    const [dup] = await conexion.execute('SELECT id_usuario FROM usuarios WHERE usuario = ? OR correo = ?', [usuario.trim(), correo.trim()]);
+    const [dup] = await conexion.execute(
+      'SELECT id_usuario FROM usuarios WHERE usuario = ? OR LOWER(correo) = ?',
+      [usuario.trim(), correoNormalizado]
+    );
     if (dup.length) throw fallo('El usuario o el correo ya están registrados', 409);
     const [[filaRol]] = await conexion.execute('SELECT id_rol FROM roles WHERE nombre = ?', [rol]);
     if (!filaRol) throw fallo('Falta el rol en la base de datos. Ejecuta: npm run db:instalar', 500);

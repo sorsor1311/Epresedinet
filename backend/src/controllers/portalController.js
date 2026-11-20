@@ -1,4 +1,3 @@
-/** Áreas personales: seguimiento de citas del Cliente y panel del Propietario. */
 const pool = require('../config/db');
 const { fallo, ejecutar } = require('../utils/errores');
 const C = require('../services/citasService');
@@ -6,7 +5,6 @@ const { similaresPara } = require('./catalogoController');
 const { notificar, mensajes } = require('../services/notificationService');
 const { adjuntarFotos } = require('../services/catalogoService');
 
-// ---------- Cliente ----------
 exports.misCitas = ejecutar(async (req, res) => {
   const [filas] = await pool.query(`${C.SELECT_CITA} WHERE i.fk_usuario = ? ORDER BY s.fecha_contacto DESC LIMIT 200`, [req.usuario.id_usuario]);
   res.json({ success: true, data: filas.map(({ correo, telefono, edad, ocupacion, ...c }) => c) });
@@ -30,7 +28,6 @@ exports.miHistorial = ejecutar(async (req, res) => {
 
 exports.misRecomendaciones = ejecutar(async (req, res) => res.json({ success: true, data: await similaresPara({ usuario: req.usuario, sesion: '' }) }));
 
-// ---------- Propietario ----------
 async function propietarioDe(usuario) {
   const [[p]] = await pool.execute('SELECT id_propietario, nombre FROM propietarios WHERE fk_usuario = ?', [usuario.id_usuario]);
   if (!p) throw fallo('Tu usuario no tiene un perfil de propietario asociado', 403);

@@ -78,7 +78,6 @@ exports.eliminar = ejecutar(async (req, res) => {
   res.json({ success: true });
 });
 
-// Fotografías: subida real de archivos (JPG/PNG/WebP validados por contenido) o enlaces.
 exports.subirFotos = [(req, res, next) => recibir(req, res, e => (e ? next(fallo(e.code === 'LIMIT_FILE_SIZE' ? 'Cada foto debe pesar máximo 5 MB' : e.message)) : next())),
   ejecutar(async (req, res) => {
     const [[p]] = await pool.query('SELECT id_propiedad, foto_url FROM propiedades WHERE id_propiedad = ?', [req.params.id]);
@@ -103,7 +102,7 @@ exports.eliminarFoto = ejecutar(async (req, res) => {
   res.json({ success: true });
 });
 
-// RF011 (apoyo): recomendaciones simples por tipo y presupuesto.
+// RF011: recomendaciones simples por tipo y presupuesto.
 exports.recomendaciones = ejecutar(async (req, res) => {
   const presupuesto = Number(req.query.presupuesto), tipo = req.query.tipo ? Number(req.query.tipo) : null;
   if (!Number.isFinite(presupuesto) || presupuesto <= 0) throw fallo('Indica un presupuesto válido');

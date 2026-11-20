@@ -4,8 +4,8 @@ const env = require('./env');
 const pool = mysql.createPool({
   host: env.db.host, port: env.db.port, user: env.db.user, password: env.db.password, database: env.db.database,
   charset: 'utf8mb4',
-  dateStrings: true,      // las fechas viajan como 'AAAA-MM-DD HH:MM:SS' (hora de Colombia, sin conversiones de zona)
-  decimalNumbers: true,   // los DECIMAL (dinero) llegan como número, no como texto
+  dateStrings: true, 
+  decimalNumbers: true,   
   waitForConnections: true, connectionLimit: 10, queueLimit: 0
 });
 

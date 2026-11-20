@@ -1,59 +1,479 @@
-const bcrypt = require('bcrypt');
+﻿const bcrypt = require('bcrypt');
+const crypto = require('node:crypto');
 const pool = require('../config/db');
 const { generarToken } = require('../utils/jwt');
-const { fallo, telefonoValido } = require('../utils/errores');
+const { fallo, telefonoValido, correoValido } = require('../utils/errores');
 const { crearCuenta } = require('./usuariosService');
+const env = require('../config/env');
+const { notificar } = require('./notificationService');
+const CloudinaryService = require('./cloudinaryService');
 
-const TABLA = { Cliente: 'clientes', Agente: 'agentes', Propietario: 'propietarios' };
+const TABLA = {
+  Cliente: 'clientes',
+  Agente: 'agentes',
+  Propietario: 'propietarios'
+};
 
 class AuthService {
-  /** Registro público: solo crea clientes. Los demás roles los crea el administrador. */
   static async registrarUsuario(datos = {}) {
     const { usuario, correo, password, nombre, telefono, profesion } = datos;
-    if (![usuario, correo, password, nombre, telefono, profesion].every(v => typeof v === 'string' && v.trim()))
+
+    if (![usuario, correo, password, nombre, telefono, profesion]
+      .every(v => typeof v === 'string' && v.trim())) {
       throw fallo('Se requieren usuario, correo, password, nombre, telefono y profesion');
-    const cuenta = await crearCuenta({ rol: 'Cliente', usuario, correo, password, nombre, telefono, profesion });
-    const nuevo = { id_usuario: cuenta.id_usuario, usuario: cuenta.usuario, correo: cuenta.correo, rol: 'Cliente' };
+    }
+
+    const cuenta = await crearCuenta({
+      rol: 'Cliente', usuario, correo, password, nombre, telefono, profesion
+    });
+
+    const nuevo = {
+      id_usuario: cuenta.id_usuario,
+      usuario: cuenta.usuario,
+      correo: cuenta.correo,
+      rol: 'Cliente'
+    };
+
     return { usuario: nuevo, token: generarToken(nuevo) };
   }
 
   static async login({ correo, password } = {}) {
-    if (!correo || !password) throw fallo('El correo y la contraseña son requeridos');
-    const [filas] = await pool.execute('SELECT u.id_usuario, u.usuario, u.correo, u.password, r.nombre AS rol FROM usuarios u INNER JOIN roles r ON r.id_rol = u.fk_rol WHERE u.correo = ?', [String(correo).trim()]);
+    if (!correo || !password) throw fallo('El correo y la contrase?a son requeridos');
+
+    const [filas] = await pool.execute(
+      `SELECT u.id_usuario, u.usuario, u.correo, u.password,
+              r.nombre AS rol
+       FROM usuarios u
+       INNER JOIN roles r ON r.id_rol = u.fk_rol
+       WHERE u.correo = ?`,
+      [String(correo).trim()]
+    );
+
     const u = filas[0];
-    // Mismo mensaje exista o no el correo: no revela qué cuentas están registradas.
-    if (!u || !(await bcrypt.compare(String(password), u.password))) throw fallo('Credenciales incorrectas', 401);
+
+    if (!u || !(await bcrypt.compare(String(password), u.password))) {
+      throw fallo('Credenciales incorrectas', 401);
+    }
+
     const { password: _h, ...seguro } = u;
     return { usuario: seguro, token: generarToken(seguro) };
   }
 
-  /** Perfil del usuario autenticado (nombre, teléfono, etc. según su rol). */
   static async perfil(sesion) {
-    const [[u]] = await pool.execute('SELECT u.id_usuario, u.usuario, u.correo, u.fecha_creacion, r.nombre AS rol FROM usuarios u JOIN roles r ON r.id_rol = u.fk_rol WHERE u.id_usuario = ?', [sesion.id_usuario]);
+    const [[u]] = await pool.execute(
+      `SELECT u.id_usuario, u.usuario, u.correo, u.fecha_creacion,
+              u.nombre, u.telefono, u.tipo_documento,
+              u.numero_documento, u.foto_url,
+              r.nombre AS rol
+       FROM usuarios u
+       JOIN roles r ON r.id_rol = u.fk_rol
+       WHERE u.id_usuario = ?`,
+      [sesion.id_usuario]
+    );
+
     if (!u) throw fallo('Usuario no encontrado', 404);
+
     const tabla = TABLA[u.rol];
     let perfil = {};
-    if (tabla) { const [[p]] = await pool.query('SELECT * FROM ?? WHERE fk_usuario = ?', [tabla, u.id_usuario]); perfil = p || {}; }
-    return { ...u, nombre: perfil.nombre || u.usuario, telefono: perfil.telefono || '', profesion: perfil.profesion || '' };
+
+    if (tabla) {
+      const [[p]] = await pool.query(
+        'SELECT * FROM ?? WHERE fk_usuario = ?',
+        [tabla, u.id_usuario]
+      );
+      perfil = p || {};
+    }
+
+    return {
+      ...u,
+      nombre: u.nombre || perfil.nombre || u.usuario,
+      telefono: u.telefono || perfil.telefono || '',
+      profesion: perfil.profesion || '',
+      tipo_documento: u.tipo_documento || '',
+      numero_documento: u.numero_documento || '',
+      foto_url: u.foto_url || null
+    };
   }
 
-  static async actualizarPerfil(sesion, { nombre, telefono, profesion } = {}) {
-    const tabla = TABLA[sesion.rol];
-    if (!tabla) throw fallo('Tu rol no tiene perfil editable');
-    if (nombre !== undefined && !String(nombre).trim()) throw fallo('El nombre es obligatorio');
-    if (telefono !== undefined && !telefonoValido(telefono)) throw fallo('El teléfono debe contener 10 dígitos');
-    const campos = { nombre, telefono, ...(sesion.rol === 'Cliente' ? { profesion } : {}) };
-    const sets = Object.entries(campos).filter(([, v]) => v !== undefined);
-    if (!sets.length) throw fallo('No hay datos para actualizar');
-    await pool.query(`UPDATE ?? SET ${sets.map(() => '?? = ?').join(', ')} WHERE fk_usuario = ?`, [tabla, ...sets.flat(), sesion.id_usuario]);
+  static async actualizarPerfil(sesion, datos = {}) {
+    const { nombre, telefono, profesion, tipo_documento, numero_documento } = datos;
+
+    if (nombre !== undefined && !String(nombre).trim()) {
+      throw fallo('El nombre es obligatorio');
+    }
+
+    if (telefono !== undefined && !telefonoValido(telefono)) {
+      throw fallo('El tel?fono debe contener 10 d?gitos');
+    }
+
+    if (profesion !== undefined && sesion.rol !== 'Cliente') {
+      throw fallo('La profesi?n solo aplica al perfil de cliente');
+    }
+
+    if ((tipo_documento !== undefined) !== (numero_documento !== undefined)) {
+      throw fallo('Debes indicar el tipo y el n?mero de documento');
+    }
+
+    if (tipo_documento !== undefined) {
+      if (!String(tipo_documento).trim() || !String(numero_documento).trim()) {
+        throw fallo('El tipo y n?mero de documento son obligatorios');
+      }
+
+      if (String(numero_documento).trim().length > 30) {
+        throw fallo('El n?mero de documento no puede superar 30 caracteres');
+      }
+    }
+
+    const campos = {
+      nombre: nombre === undefined ? undefined : String(nombre).trim(),
+      telefono: telefono === undefined ? undefined : String(telefono).trim(),
+      tipo_documento: tipo_documento === undefined ? undefined : String(tipo_documento).trim(),
+      numero_documento: numero_documento === undefined ? undefined : String(numero_documento).trim()
+    };
+
+    if (sesion.rol === 'Cliente' && profesion !== undefined) {
+      campos.profesion = String(profesion).trim();
+    }
+
+    const conexion = await pool.getConnection();
+
+    try {
+      await conexion.beginTransaction();
+
+      if (numero_documento !== undefined) {
+        const [[duplicado]] = await conexion.execute(
+          `SELECT id_usuario FROM usuarios
+           WHERE numero_documento = ? AND id_usuario <> ?
+           LIMIT 1`,
+          [campos.numero_documento, sesion.id_usuario]
+        );
+
+        if (duplicado) {
+          throw fallo('Ese n?mero de documento ya est? registrado', 409);
+        }
+      }
+
+      const comunes = Object.entries(campos)
+        .filter(([campo, valor]) => valor !== undefined && campo !== 'profesion');
+
+      if (comunes.length) {
+        await conexion.query(
+          `UPDATE usuarios SET ${comunes.map(([campo]) => `\`${campo}\` = ?`).join(', ')}
+           WHERE id_usuario = ?`,
+          [...comunes.map(([, valor]) => valor), sesion.id_usuario]
+        );
+      }
+
+      const tabla = TABLA[sesion.rol];
+
+      if (tabla) {
+        const perfilCampos = comunes.filter(([campo]) =>
+          campo === 'nombre' || campo === 'telefono'
+        );
+
+        if (sesion.rol === 'Cliente' && profesion !== undefined) {
+          perfilCampos.push(['profesion', campos.profesion]);
+        }
+
+        if (perfilCampos.length) {
+          await conexion.query(
+            `UPDATE ?? SET ${perfilCampos.map(() => '?? = ?').join(', ')}
+             WHERE fk_usuario = ?`,
+            [tabla, ...perfilCampos.flat(), sesion.id_usuario]
+          );
+        }
+      }
+
+      await conexion.commit();
+    } catch (error) {
+      await conexion.rollback();
+      throw error;
+    } finally {
+      conexion.release();
+    }
+
     return AuthService.perfil(sesion);
   }
 
+  static async subirFotoPerfil(sesion, buffer) {
+    const nueva = await CloudinaryService.subirFotoPerfil(
+      buffer,
+      sesion.id_usuario
+    );
+
+    let usuario;
+
+    try {
+      const [filas] = await pool.execute(
+        'SELECT foto_public_id FROM usuarios WHERE id_usuario = ?',
+        [sesion.id_usuario]
+      );
+
+      usuario = filas[0];
+
+      if (!usuario) {
+        throw fallo('Usuario no encontrado', 404);
+      }
+
+      await pool.execute(
+        'UPDATE usuarios SET foto_url = ?, foto_public_id = ? WHERE id_usuario = ?',
+        [nueva.url, nueva.publicId, sesion.id_usuario]
+      );
+    } catch (error) {
+      try {
+        await CloudinaryService.eliminarFotoPerfil(nueva.publicId);
+      } catch (limpiezaError) {
+        console.error('[Cloudinary] No se pudo limpiar la fotografía nueva:', limpiezaError.message);
+      }
+
+      throw error;
+    }
+
+    if (usuario.foto_public_id) {
+      try {
+        await CloudinaryService.eliminarFotoPerfil(usuario.foto_public_id);
+      } catch (error) {
+        console.error('[Cloudinary] No se pudo eliminar la fotografía anterior:', error.message);
+      }
+    }
+
+    return AuthService.perfil(sesion);
+  }
+  static async eliminarFotoPerfil(sesion) {
+    const [[usuario]] = await pool.execute(
+      'SELECT foto_public_id FROM usuarios WHERE id_usuario = ?',
+      [sesion.id_usuario]
+    );
+
+    if (!usuario) {
+      throw fallo('Usuario no encontrado', 404);
+    }
+
+    await pool.execute(
+      'UPDATE usuarios SET foto_url = NULL, foto_public_id = NULL WHERE id_usuario = ?',
+      [sesion.id_usuario]
+    );
+
+    if (usuario.foto_public_id) {
+      try {
+        await CloudinaryService.eliminarFotoPerfil(usuario.foto_public_id);
+      } catch (error) {
+        console.error('[Cloudinary] No se pudo eliminar la fotografía:', error.message);
+      }
+    }
+
+    return AuthService.perfil(sesion);
+  }
+  static async solicitarCambioCorreo(sesion, { correo, password } = {}) {
+    const nuevoCorreo = String(correo || '').trim().toLowerCase();
+
+    if (!correoValido(nuevoCorreo)) {
+      throw fallo('El nuevo correo electrónico no es válido');
+    }
+
+    if (!password) {
+      throw fallo('Debes indicar tu contraseña actual');
+    }
+
+    if (!env.resend.apiKey || !env.resend.from) {
+      throw fallo('El servicio de correo no está configurado. No se inició el cambio.', 503);
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const conexion = await pool.getConnection();
+
+    try {
+      await conexion.beginTransaction();
+
+      const [[usuario]] = await conexion.execute(
+        'SELECT id_usuario, correo, password FROM usuarios WHERE id_usuario = ? FOR UPDATE',
+        [sesion.id_usuario]
+      );
+
+      if (!usuario) throw fallo('Usuario no encontrado', 404);
+
+      if (!(await bcrypt.compare(String(password), usuario.password))) {
+        throw fallo('La contraseña actual no es correcta', 401);
+      }
+
+      if (usuario.correo.toLowerCase() === nuevoCorreo) {
+        throw fallo('El nuevo correo es igual al correo actual');
+      }
+
+      const [[ocupado]] = await conexion.execute(
+        `SELECT id_usuario FROM usuarios
+         WHERE correo = ? AND id_usuario <> ?
+         LIMIT 1`,
+        [nuevoCorreo, sesion.id_usuario]
+      );
+
+      if (ocupado) throw fallo('Ese correo ya está asociado a otra cuenta', 409);
+
+      const [[pendiente]] = await conexion.execute(
+        `SELECT id_usuario FROM usuarios
+         WHERE correo_pendiente = ? AND id_usuario <> ?
+         LIMIT 1`,
+        [nuevoCorreo, sesion.id_usuario]
+      );
+
+      if (pendiente) throw fallo('Ese correo ya está pendiente de verificación en otra cuenta', 409);
+
+      for (const tabla of ['clientes', 'agentes', 'propietarios']) {
+        const [[registro]] = await conexion.execute(
+          `SELECT fk_usuario FROM ${tabla}
+           WHERE correo = ?
+             AND (fk_usuario IS NULL OR fk_usuario <> ?)
+           LIMIT 1`,
+          [nuevoCorreo, sesion.id_usuario]
+        );
+
+        if (registro) {
+          throw fallo('Ese correo aparece registrado en otro perfil', 409);
+        }
+      }
+
+      await conexion.execute(
+        `UPDATE usuarios
+         SET correo_pendiente = ?,
+             correo_verificacion_hash = ?,
+             correo_verificacion_expira = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 30 MINUTE)
+         WHERE id_usuario = ?`,
+        [nuevoCorreo, hash, sesion.id_usuario]
+      );
+
+      await conexion.commit();
+    } catch (error) {
+      await conexion.rollback();
+      throw error;
+    } finally {
+      conexion.release();
+    }
+
+    const enlace = `${env.apiPublicUrl}/api/auth/verify-email?token=${token}`;
+    const contenido =
+      `Hola,\n\n` +
+      `Recibimos una solicitud para cambiar el correo de tu cuenta EPRESEDI.\n\n` +
+      `Para confirmar el nuevo correo, abre este enlace:\n${enlace}\n\n` +
+      `El enlace vence en 30 minutos y solo puede utilizarse una vez.\n` +
+      `Si no solicitaste este cambio, puedes ignorar este mensaje. Tu correo actual seguirá activo.\n\n` +
+      `EPRESEDI S.A.S.`;
+
+    let enviada = false;
+
+    try {
+      enviada = await notificar(
+        nuevoCorreo,
+        'Verifica tu nuevo correo electrónico - EPRESEDI',
+        contenido
+      );
+    } catch {
+      enviada = false;
+    }
+
+    if (!enviada) {
+      await pool.execute(
+        `UPDATE usuarios
+         SET correo_pendiente = NULL,
+             correo_verificacion_hash = NULL,
+             correo_verificacion_expira = NULL
+         WHERE id_usuario = ? AND correo_verificacion_hash = ?`,
+        [sesion.id_usuario, hash]
+      );
+
+      throw fallo('No fue posible enviar el correo de verificación. Revisa la configuración de Resend e inténtalo nuevamente.', 503);
+    }
+
+    return {
+      mensaje: 'Enviamos un enlace de verificación al nuevo correo. Tienes 30 minutos para confirmarlo.'
+    };
+  }
+
+  static async confirmarCambioCorreo(token) {
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/i.test(token)) {
+      throw fallo('El enlace de verificación no es válido o está incompleto');
+    }
+
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const conexion = await pool.getConnection();
+
+    try {
+      await conexion.beginTransaction();
+
+      const [[usuario]] = await conexion.execute(
+        `SELECT u.id_usuario, u.correo_pendiente, r.nombre AS rol
+         FROM usuarios u
+         JOIN roles r ON r.id_rol = u.fk_rol
+         WHERE u.correo_verificacion_hash = ?
+           AND u.correo_verificacion_expira > UTC_TIMESTAMP()
+         LIMIT 1
+         FOR UPDATE`,
+        [hash]
+      );
+
+      if (!usuario || !usuario.correo_pendiente) {
+        throw fallo('El enlace ha vencido o ya fue utilizado. Solicita un nuevo cambio de correo.', 400);
+      }
+
+      const tabla = TABLA[usuario.rol];
+
+      if (tabla) {
+        await conexion.execute(
+          `UPDATE ${tabla} SET correo = ? WHERE fk_usuario = ?`,
+          [usuario.correo_pendiente, usuario.id_usuario]
+        );
+      }
+
+      await conexion.execute(
+        `UPDATE usuarios
+         SET correo = correo_pendiente,
+             correo_pendiente = NULL,
+             correo_verificacion_hash = NULL,
+             correo_verificacion_expira = NULL
+         WHERE id_usuario = ?`,
+        [usuario.id_usuario]
+      );
+
+      await conexion.commit();
+
+      return {
+        success: true,
+        mensaje: 'Tu correo electrónico fue verificado y actualizado correctamente.'
+      };
+    } catch (error) {
+      await conexion.rollback();
+
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw fallo('Ese correo ya está asociado a otra cuenta', 409);
+      }
+
+      throw error;
+    } finally {
+      conexion.release();
+    }
+  }
   static async cambiarPassword(sesion, { actual, nueva } = {}) {
-    if (!nueva || String(nueva).length < 8) throw fallo('La nueva contraseña debe tener al menos 8 caracteres');
-    const [[u]] = await pool.execute('SELECT password FROM usuarios WHERE id_usuario = ?', [sesion.id_usuario]);
-    if (!u || !(await bcrypt.compare(String(actual || ''), u.password))) throw fallo('La contraseña actual no es correcta', 401);
-    await pool.execute('UPDATE usuarios SET password = ? WHERE id_usuario = ?', [await bcrypt.hash(String(nueva), 10), sesion.id_usuario]);
+    if (!nueva || String(nueva).length < 8) {
+      throw fallo('La nueva contrase?a debe tener al menos 8 caracteres');
+    }
+
+    const [[u]] = await pool.execute(
+      'SELECT password FROM usuarios WHERE id_usuario = ?',
+      [sesion.id_usuario]
+    );
+
+    if (!u || !(await bcrypt.compare(String(actual || ''), u.password))) {
+      throw fallo('La contrase?a actual no es correcta', 401);
+    }
+
+    await pool.execute(
+      'UPDATE usuarios SET password = ? WHERE id_usuario = ?',
+      [await bcrypt.hash(String(nueva), 10), sesion.id_usuario]
+    );
   }
 }
+
 module.exports = AuthService;
+
+
+

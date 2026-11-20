@@ -1,5 +1,4 @@
 const pool = require('../config/db');
-/** Deja constancia de una acción del personal. Nunca interrumpe la operación principal. */
 async function auditar(usuario, accion, entidad, idEntidad = null, detalle = null) {
   try {
     await pool.execute('INSERT INTO auditoria (fk_usuario, usuario, accion, entidad, id_entidad, detalle) VALUES (?,?,?,?,?,?)',

@@ -1,4 +1,3 @@
-/** /api/portal: áreas personales por rol (Cliente y Propietario). */
 const router = require('express').Router();
 const p = require('../controllers/portalController');
 const { verificarToken, autorizarRoles } = require('../middlewares/authMiddleware');
