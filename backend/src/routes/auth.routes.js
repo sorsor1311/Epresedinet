@@ -3,7 +3,6 @@ const c = require('../controllers/authController');
 const { verificarToken, limitar } = require('../middlewares/authMiddleware');
 const env = require('../config/env');
 
-router.post('/register', limitar(env.limiteAuth), c.registrar);
 router.post('/login', limitar(env.limiteAuth), c.login);
 router.get('/me', verificarToken, c.perfil);
 router.put('/me', verificarToken, c.actualizarPerfil);
