@@ -4,7 +4,7 @@ const { verificar } = require('../utils/jwt');
 const verificarToken = (req, res, next) => {
   const cabecera = req.headers.authorization || '';
   if (!cabecera.startsWith('Bearer ')) return res.status(401).json({ success: false, message: 'Falta el token de acceso' });
-  try { req.usuario = verificar(cabecera.slice(7)); next(); }
+  try { req.usuario = verificar(cabecera.slice(7)); if (!['Administrador', 'Agente'].includes(req.usuario.rol)) return res.status(403).json({ success: false, message: 'Acceso restringido al personal' }); next(); }
   catch { res.status(401).json({ success: false, message: 'Token inválido o expirado' }); }
 };
 
@@ -17,7 +17,7 @@ const autorizarRoles = (...permitidos) => (req, res, next) => {
 /** Identifica al usuario si envía un token válido, pero NO bloquea a los visitantes. Un token inválido = anónimo. */
 const autenticacionOpcional = (req, _res, next) => {
   const cabecera = req.headers.authorization || '';
-  if (cabecera.startsWith('Bearer ')) { try { req.usuario = verificar(cabecera.slice(7)); } catch { /* anónimo */ } }
+  if (cabecera.startsWith('Bearer ')) { try { const usuario = verificar(cabecera.slice(7)); if (['Administrador', 'Agente'].includes(usuario.rol)) req.usuario = usuario; } catch { /* anónimo */ } }
   next();
 };
 
