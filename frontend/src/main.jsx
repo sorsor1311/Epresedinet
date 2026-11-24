@@ -61,7 +61,7 @@ function App() {
   const toast = useToast();
   const fav = useFavoritos();
   const [ruta, setRuta] = useState(rutaActual);
-  const [usuario, setUsuario] = useState(() => { if (sesion.usuario && !usaPanel(sesion.usuario)) { sesion.cerrar(); return null; } return sesion.usuario; });
+  const [usuario, setUsuario] = useState(() => { const guardado = sesion.usuario(); if (guardado && !usaPanel(guardado)) { sesion.cerrar(); return null; } return guardado; });
   const [propiedades, setPropiedades] = useState([]);
   const [tipos, setTipos] = useState(TIPOS_BASE);
   const [cargando, setCargando] = useState(true);
@@ -108,7 +108,7 @@ function App() {
         {usaPanel(usuario) && <a href="#/panel/resumen"><LayoutDashboard size={15}/> Mi panel</a>}
       </nav>
       <div className="cab-acc">
-        <a className="btn ghost sm" href={usuario?.rol === 'Cliente' ? '#/cuenta/lista' : '#/cuenta/lista'} title="Mi lista de interés" aria-label="Mi lista de interés" style={{ position: 'relative' }}><Heart size={18}/>{fav.ids.length > 0 && <span style={{ position: 'absolute', top: -2, right: -2, background: '#c0392b', color: '#fff', borderRadius: 9, fontSize: 10, fontWeight: 700, padding: '0 5px' }}>{fav.ids.length}</span>}</a>
+        <a className="btn ghost sm" href="#/cuenta/lista" title="Mi lista de interés" aria-label="Mi lista de interés" style={{ position: 'relative' }}><Heart size={18}/>{fav.ids.length > 0 && <span style={{ position: 'absolute', top: -2, right: -2, background: '#c0392b', color: '#fff', borderRadius: 9, fontSize: 10, fontWeight: 700, padding: '0 5px' }}>{fav.ids.length}</span>}</a>
         {usuario ? <button className="btn sec sm" onClick={() => salir()}><LogOut size={16}/> Salir</button> : <button className="btn sm" onClick={() => ir('acceso')}><LogIn size={16}/> Ingresar</button>}</div>
       <button className="btn ghost icono menu-mov" onClick={() => setMenu(!menu)} aria-label="Menú">{menu ? <X size={22}/> : <Menu size={22}/>}</button>
     </div></header>
@@ -118,7 +118,7 @@ function App() {
       {raiz === 'servicios' && <Servicios/>}
       {raiz === 'asistente' && <Asistente tipos={tipos}/>}
       {raiz === 'acceso' && <Acceso onEntrar={entrar}/>}
-      {raiz === 'cuenta' && sub === 'lista' && <Cuenta usuario={usuario} tab={sub} ir={ir} propiedades={propiedades} tipos={tipos} onPerfil={actualizarPerfil}/>}
+      {raiz === 'cuenta' && <Cuenta usuario={usuario} tab={sub} ir={ir} propiedades={propiedades} tipos={tipos} onPerfil={actualizarPerfil}/>}
       {!['inicio', 'propiedades', 'asistente', 'acceso', 'cuenta', 'servicios'].includes(raiz) && <div className="contenedor"><Vacio titulo="Página no encontrada"><button className="btn" onClick={() => ir('inicio')}>Volver al inicio</button></Vacio></div>}
     </main>
     <footer className="pie"><div className="contenedor pie-in">
