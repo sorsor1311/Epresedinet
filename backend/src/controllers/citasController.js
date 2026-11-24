@@ -25,7 +25,7 @@ exports.solicitar = ejecutar(async (req, res) => {
   if (![id_interesado, id_propiedad].every(v => Number.isInteger(Number(v)) && Number(v) > 0)) throw fallo('Selecciona un interesado y una propiedad');
   const cita = await C.crearCita({ id_interesado: Number(id_interesado), id_propiedad: Number(id_propiedad), fecha, hora, modalidad, notas: `Tipo de persona: ${tipo_persona}. Interés: ${modalidad === 'venta' ? 'Compra' : 'Arriendo'}.` });
   const [[d]] = await pool.execute(`${C.SELECT_CITA} WHERE s.id_solicitud = ?`, [cita.id_solicitud]);
-  await C.avisarCita(d, cita.codigo_gestion);
+  await C.avisarCita(d, cita.codigo_gestion).catch(() => false);
   res.status(201).json({ success: true, data: { ...cita, asesor: d.agente, fecha_contacto: d.fecha_contacto, propiedad: d.propiedad, tipo_persona, modalidad } });
 });
 

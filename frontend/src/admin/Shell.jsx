@@ -10,7 +10,7 @@ const MENUS = {
     ['Atención al cliente', [['citas', 'Solicitudes y citas', Inbox], ['interesados', 'Clientes interesados', Users], ['historial', 'Búsquedas de clientes', History]]],
     ['Inventario', [['propiedades', 'Propiedades', Building2], ['propietarios', 'Propietarios', Home]]],
     ['Equipo', [['asesores', 'Asesores y horarios', UserCheck]]],
-    ['Operación', [['remodelaciones', 'Remodelaciones', Hammer], ['visitas', 'Visitas', MapPinned], ['clientes', 'Clientes', UserRound]]],
+    ['Operación', [['servicios', 'Solicitudes de servicios', Briefcase], ['remodelaciones', 'Remodelaciones', Hammer], ['visitas', 'Visitas', MapPinned], ['clientes', 'Clientes', UserRound]]],
     ['Análisis y control', [['reportes', 'Reportes y análisis', BarChart3], ['notificaciones', 'Notificaciones', Bell], ['auditoria', 'Registro de actividad', ShieldCheck]]]
   ],
   Agente: [

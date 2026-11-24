@@ -1,4 +1,5 @@
 import React from 'react';
+import SolicitudesServicios from './SolicitudesServicios.jsx';
 import Shell, { seccionesDe, tituloDe } from './Shell.jsx';
 import Resumen from './Resumen.jsx';
 import Calendario from './Calendario.jsx';
@@ -14,7 +15,7 @@ export default function Panel({ usuario, seccion, ir, onSalir, irSitio, onPerfil
   const validas = seccionesDe(usuario.rol);
   const s = validas.includes(seccion) ? seccion : 'resumen';
   const vista = {
-      resumen: <Resumen usuario={usuario} ir={ir}/>, calendario: <Calendario usuario={usuario}/>, citas: <Citas usuario={usuario}/>, propiedades: <Propiedades usuario={usuario}/>,
+      servicios: <SolicitudesServicios/>, resumen: <Resumen usuario={usuario} ir={ir}/>, calendario: <Calendario usuario={usuario}/>, citas: <Citas usuario={usuario}/>, propiedades: <Propiedades usuario={usuario}/>,
       asesores: <Asesores usuario={usuario}/>, reportes: <Reportes usuario={usuario}/>, propietarios: <Personas clave="propietarios"/>, clientes: <Personas clave="clientes"/>, perfil: <Perfil onActualizado={onPerfil}/>
     }[s] || (['remodelaciones', 'visitas'].includes(s) ? <RecursoCRUD clave={s} usuario={usuario}/> : <ListaSimple clave={s}/>);
   return <Shell usuario={usuario} seccion={s} ir={ir} onSalir={onSalir} irSitio={irSitio}>{vista}</Shell>;

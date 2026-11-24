@@ -1,5 +1,6 @@
 /** /api/atencion: chat-bot, citas, calendario, asesores y reportes. */
 const router = require('express').Router();
+const servicios = require('../controllers/serviciosController');
 const cat = require('../controllers/catalogoController');
 const cit = require('../controllers/citasController');
 const ase = require('../controllers/asesoresController');
@@ -9,6 +10,9 @@ const env = require('../config/env');
 const publico = limitar(env.limitePublico);
 
 // Públicas (cliente)
+router.post('/servicios', publico, servicios.crear);
+router.get('/servicios', ...soloAdmin, servicios.listar);
+router.patch('/servicios/:id', ...soloAdmin, servicios.estado);
 router.get('/zonas', cat.zonas);
 router.post('/buscar', publico, autenticacionOpcional, cat.buscar);
 router.get('/similares', publico, autenticacionOpcional, cat.similares);
