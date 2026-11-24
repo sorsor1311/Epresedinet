@@ -125,7 +125,7 @@ export default function Asistente({ tipos }) {
   }
   async function citaLista(c) {
     agregar({ de: 'bot', tipo: 'confirmacion', cita: c });
-    await decir('Te enviamos la confirmación a tu correo. ¿Quieres seguir viendo opciones?', 500); setPaso('resultados');
+    await decir('Guarda tu código de gestión y revisa los requisitos de tu cita. ¿Quieres seguir viendo opciones?', 500); setPaso('resultados');
   }
   async function enviar(e) {
     e.preventDefault(); const t = texto.trim(); if (!t) return; setTexto('');
@@ -170,7 +170,7 @@ export default function Asistente({ tipos }) {
       <div className="tarjeta tarjeta-pad"><h3>Tu búsqueda</h3><div className="resumen-b">
         <div><span>Tipo</span><b>{filtros.tipo || '—'}</b></div><div><span>Negociación</span><b>{filtros.modalidad ? (filtros.modalidad === 'compra' ? 'Compra' : 'Arriendo') : '—'}</b></div>
         <div><span>Zona</span><b>{filtros.zona || (paso === 'presupuesto' || filtros.presupuesto ? 'Cualquiera' : '—')}</b></div><div><span>Presupuesto</span><b>{filtros.presupuesto ? dinero(filtros.presupuesto) : '—'}</b></div></div></div>
-      <div className="tarjeta tarjeta-pad"><h3>¿Ya tienes una cita?</h3><p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.55, marginBottom: 12 }}>Cámbiala o cancélala con el código que recibiste en tu correo.</p>
+      <div className="tarjeta tarjeta-pad"><h3>¿Ya tienes una cita?</h3><p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.55, marginBottom: 12 }}>Cámbiala o cancélala con el código que recibiste al confirmar tu cita.</p>
         <button className="btn sec block" onClick={() => setGestionar(true)}><KeyRound size={16}/> Gestionar mi cita</button></div>
     </aside>
     {detalle && <DetalleInmueble p={detalle} tipo={tipoDe(detalle)} onCerrar={() => setDetalle(null)}/>}
