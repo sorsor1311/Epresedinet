@@ -31,17 +31,18 @@ function Fotos({ p, onCambio }) {
   const [subiendo, setSubiendo] = useState(false);
   const [url, setUrl] = useState('');
   async function enviar(archivos, urls = []) {
+    if ((p.fotos?.length || 0) + archivos.length + urls.length > 10) { toast('Máximo diez fotografías por inmueble', 'error'); return; }
     const f = new FormData(); [...archivos].forEach(a => f.append('fotos', a)); urls.forEach(u => f.append('urls', u));
     setSubiendo(true);
     try { await subir(`/propiedades/${p.id_propiedad}/fotos`, f); toast('Fotos agregadas'); setUrl(''); onCambio(); } catch (e) { toast(e.message, 'error'); } finally { setSubiendo(false); }
   }
   return <div>
-    <h4 style={{ fontSize: 13, margin: '0 0 10px' }}>Fotografías ({p.fotos?.length || 0})</h4>
+    <h4 style={{ fontSize: 13, margin: '0 0 10px' }}>Fotografías ({p.fotos?.length || 0}/10)</h4>
     <div className="fotos-grid">{(p.fotos || []).map(f => <div className="foto-it" key={f}><img src={urlFoto(f)} alt=""/>
       <button type="button" aria-label="Quitar foto" onClick={async () => { try { const fila = (p.fotos_ids || []).find(x => x.url === f); await api(`/propiedades/${p.id_propiedad}/fotos/${fila.id_foto}`, { metodo: 'DELETE' }); toast('Foto eliminada'); onCambio(); } catch (e) { toast(e.message, 'error'); } }}><X size={14}/></button></div>)}</div>
     <label className="zona-subida" style={{ display: 'block', marginTop: 12, cursor: 'pointer' }}><Upload size={18} style={{ verticalAlign: -4 }}/> {subiendo ? 'Subiendo…' : 'Arrastra o selecciona imágenes (JPG, PNG o WebP · máx. 5 MB)'}
-      <input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={subiendo} onChange={e => e.target.files.length && enviar(e.target.files)}/></label>
-    <div style={{ display: 'flex', gap: 8, marginTop: 10 }}><input className="input" type="url" placeholder="…o pega el enlace de una foto (https://)" value={url} onChange={e => setUrl(e.target.value)}/><button type="button" className="btn sec" disabled={!/^https?:\/\//.test(url) || subiendo} onClick={() => enviar([], [url])}>Agregar</button></div>
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={subiendo || (p.fotos?.length || 0) >= 10} onChange={e => e.target.files.length && enviar(e.target.files)}/></label>
+    <div style={{ display: 'flex', gap: 8, marginTop: 10 }}><input className="input" type="url" placeholder="…o pega el enlace de una foto (https://)" value={url} onChange={e => setUrl(e.target.value)}/><button type="button" className="btn sec" disabled={!/^https?:\/\//.test(url) || subiendo || (p.fotos?.length || 0) >= 10} onClick={() => enviar([], [url])}>Agregar</button></div>
   </div>;
 }
 

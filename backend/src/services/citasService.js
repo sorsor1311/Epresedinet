@@ -49,13 +49,14 @@ async function avisarCita(cita, codigo) {
   if (asesor?.correo) await notificar(asesor.correo, 'EPRESEDI: nueva cita asignada', mensajes.citaAsesor({ cliente: cita.cliente, correo: cita.correo, telefono: cita.telefono, ocupacion: cita.ocupacion, ...base }), cita.fk_agente);
 }
 
-async function crearCita({ id_interesado, id_propiedad, fecha, hora, notas = null, origen = 'chatbot', soloAgente = null }) {
+async function crearCita({ id_interesado, id_propiedad, fecha, hora, notas = null, origen = 'chatbot', soloAgente = null, modalidad = null }) {
   const { fecha: f, hora: h } = interpretarFechaHora(fecha, hora);
   const conexion = await pool.getConnection();
   try {
     await conexion.beginTransaction();
-    const [[propiedad]] = await conexion.execute('SELECT id_propiedad FROM propiedades WHERE id_propiedad = ? AND estado = ?', [id_propiedad, 'disponible']);
+    const [[propiedad]] = await conexion.execute('SELECT id_propiedad, precio_venta, precio_arrendamiento FROM propiedades WHERE id_propiedad = ? AND estado = ?', [id_propiedad, 'disponible']);
     if (!propiedad) throw fallo('El inmueble ya no está disponible');
+    if (modalidad && !(Number(modalidad === 'venta' ? propiedad.precio_venta : propiedad.precio_arrendamiento) > 0)) throw fallo('El inmueble no está disponible para esa negociación');
     const [[interesado]] = await conexion.execute('SELECT id_interesado FROM interesados WHERE id_interesado = ?', [id_interesado]);
     if (!interesado) throw fallo('Cliente interesado no encontrado', 404);
     const [[repetida]] = await conexion.execute(`SELECT id_solicitud FROM solicitudes_contacto WHERE fk_interesado = ? AND fk_propiedad = ? AND estado IN ('programada','reprogramada') AND fecha_contacto >= NOW() - INTERVAL 1 DAY`, [id_interesado, id_propiedad]);

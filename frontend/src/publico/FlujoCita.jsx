@@ -41,7 +41,7 @@ export default function FlujoCita({ propiedad, interesadoId, onInteresado, onLis
   </form>;
   return <div className="form-col">
     <Campo etiqueta="Tipo de persona"><select required value={tipoPersona} onChange={e => setTipoPersona(e.target.value)}><option value="">Selecciona</option>{['Empleado', 'Independiente', 'Pensionado', 'Persona Jurídica'].map(t => <option key={t}>{t}</option>)}</select></Campo>
-    <Campo etiqueta="Me interesa"><select required value={modalidad} onChange={e => setModalidad(e.target.value)}><option value="">Selecciona</option><option value="arriendo">Arrendar</option><option value="venta">Comprar</option></select></Campo>
+    <Campo etiqueta="Me interesa"><select required value={modalidad} onChange={e => setModalidad(e.target.value)}><option value="">Selecciona</option>{Number(propiedad.precio_arrendamiento) > 0 && <option value="arriendo">Arrendar</option>}{Number(propiedad.precio_venta) > 0 && <option value="venta">Comprar</option>}</select></Campo>
     <SelectorHorario valor={hora} onCambio={setHora} autoFoco/>
     {error && <p style={{ color: 'var(--danger)', fontSize: 14 }}>{error}</p>}
     <button className="btn block" disabled={!hora.hora || ocupado || !tipoPersona || !modalidad} onClick={agendar}><CalendarCheck size={18}/> {ocupado ? 'Agendando…' : 'Confirmar cita'}</button>

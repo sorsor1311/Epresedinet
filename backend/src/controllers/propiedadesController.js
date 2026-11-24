@@ -83,6 +83,9 @@ exports.subirFotos = [(req, res, next) => recibir(req, res, e => (e ? next(fallo
   ejecutar(async (req, res) => {
     const [[p]] = await pool.query('SELECT id_propiedad, foto_url FROM propiedades WHERE id_propiedad = ?', [req.params.id]);
     if (!p) throw fallo('Inmueble no encontrado', 404);
+    const [existentes] = await pool.query('SELECT url FROM propiedad_fotos WHERE fk_propiedad = ?', [p.id_propiedad]);
+    const total = new Set([...existentes.map(f => f.url), ...(p.foto_url ? [p.foto_url] : [])]).size;
+    if (total + (req.files || []).length + [].concat(req.body?.urls || []).filter(u => /^https?:\/\//i.test(u)).length > 10) throw fallo('Máximo diez fotografías por inmueble');
     const urls = [...guardarImagenes(req.files || []), ...[].concat(req.body?.urls || []).filter(u => /^https?:\/\//i.test(u))];
     if (!urls.length) throw fallo('Selecciona al menos una imagen');
     const [[{ m }]] = await pool.query('SELECT COALESCE(MAX(orden), 0) AS m FROM propiedad_fotos WHERE fk_propiedad = ?', [p.id_propiedad]);

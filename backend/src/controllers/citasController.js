@@ -23,7 +23,7 @@ exports.solicitar = ejecutar(async (req, res) => {
   if (!['Empleado', 'Independiente', 'Pensionado', 'Persona Jurídica'].includes(tipo_persona)) throw fallo('Selecciona un tipo de persona válido');
   if (!['venta', 'arriendo'].includes(modalidad)) throw fallo('Selecciona compra o arriendo');
   if (![id_interesado, id_propiedad].every(v => Number.isInteger(Number(v)) && Number(v) > 0)) throw fallo('Selecciona un interesado y una propiedad');
-  const cita = await C.crearCita({ id_interesado: Number(id_interesado), id_propiedad: Number(id_propiedad), fecha, hora, notas: `Tipo de persona: ${tipo_persona}. Interés: ${modalidad === 'venta' ? 'Compra' : 'Arriendo'}.` });
+  const cita = await C.crearCita({ id_interesado: Number(id_interesado), id_propiedad: Number(id_propiedad), fecha, hora, modalidad, notas: `Tipo de persona: ${tipo_persona}. Interés: ${modalidad === 'venta' ? 'Compra' : 'Arriendo'}.` });
   const [[d]] = await pool.execute(`${C.SELECT_CITA} WHERE s.id_solicitud = ?`, [cita.id_solicitud]);
   await C.avisarCita(d, cita.codigo_gestion);
   res.status(201).json({ success: true, data: { ...cita, asesor: d.agente, fecha_contacto: d.fecha_contacto, propiedad: d.propiedad, tipo_persona, modalidad } });
