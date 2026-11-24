@@ -49,14 +49,47 @@ export default function FlujoCita({ propiedad, interesadoId, onInteresado, onLis
   </div>;
 }
 
+const REQUISITOS = {
+  "Empleado": [
+    "Fotocopia de cédula y RUT actualizado del arrendatario y deudor solidario.",
+    "Carta laboral de ambos con sueldo, cargo, tipo de contrato (no inferior a un año) y tiempo de servicio.",
+    "Dos últimas colillas de pago de ambos."
+  ],
+  "Independiente": [
+    "Fotocopia de cédula y RUT del inquilino y codeudor.",
+    "Certificado de ingresos expedido por contador y declaración de renta de ambos.",
+    "Certificado de cámara de comercio o copias de contratos laborales de ambos.",
+    "Extractos bancarios de los últimos tres meses de ambos."
+  ],
+  "Pensionado": [
+    "Tres últimas colillas de pago y/o extractos bancarios del inquilino y codeudor.",
+    "Copia de cédula y RUT de ambos.",
+    "Certificado de pensión de ambos."
+  ],
+  "Persona Jurídica": [
+    "Certificado de existencia y representación legal de cámara de comercio y acta de junta directiva si se requiere. Confirmar vigencia con el asesor.",
+    "Fotocopia de cédula del representante legal y copia del RUT.",
+    "Estados financieros del último periodo contable y declaración de renta.",
+    "Extractos bancarios de los últimos tres meses."
+  ]
+};
+function RequisitosCita({ cita }) {
+  if (cita.modalidad === 'venta') return <p>El asesor te informará los requisitos de compra y acreditación de solvencia.</p>;
+  const lista = REQUISITOS[cita.tipo_persona];
+  if (!lista) return null;
+  const natural = cita.tipo_persona !== 'Persona Jurídica';
+  return <section style={{ marginTop: 20 }}><h4>Requisitos de arrendamiento · {cita.tipo_persona}</h4><p>Documentación inicial según el formato de EPRESEDI.</p><ul>{lista.map(t => <li key={t}>{t}</li>)}{natural && <li>Dos referencias personales y dos familiares, con número de cédula, dirección y dos teléfonos.</li>}</ul><p>Consulta con el asesor las condiciones de contratación, garantías, depósitos y trámites aplicables antes de entregar dinero o firmar documentos.</p><button className="btn sec sm" onClick={() => { const texto = ['EPRESEDI S.A.S.', 'Requisitos de arrendamiento: ' + cita.tipo_persona, 'Código: ' + cita.codigo_gestion, ...lista, ...(natural ? ['Dos referencias personales y dos familiares, con número de cédula, dirección y dos teléfonos.'] : []), 'Consulta con el asesor las condiciones de contratación, garantías, depósitos y trámites aplicables.'].join('\n\n'); const url = URL.createObjectURL(new Blob([texto], {type:'text/plain;charset=utf-8'})); const a = document.createElement('a'); a.href = url; a.download = 'requisitos-arrendamiento.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }}>Descargar lista de requisitos</button></section>;
+}
+
 export function ConfirmacionCita({ cita, onGestionar }) {
   const [copiado, setCopiado] = useState(false);
   return <div className="confirmacion">
     <h4><CalendarCheck size={20}/> ¡Tu cita está confirmada!</h4>
     <dl><dt>Inmueble</dt><dd>{cita.propiedad}</dd><dt>Fecha</dt><dd>{fechaHora(cita.fecha_contacto)}</dd><dt>Asesor</dt><dd>{cita.asesor}</dd></dl>
-    <p style={{ fontSize: 13, marginBottom: 8 }}>Guarda este código para cambiar o cancelar tu cita (también lo enviamos a tu correo):</p>
+    <p style={{ fontSize: 13, marginBottom: 8 }}>Guarda este código para cambiar o cancelar tu cita :</p>
     <div className="codigo"><span style={{ flex: 1 }}>{cita.codigo_gestion}</span>
       <button className="btn sm sec" onClick={() => { navigator.clipboard?.writeText(cita.codigo_gestion); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }}>{copiado ? <Check size={14}/> : <Copy size={14}/>} {copiado ? 'Copiado' : 'Copiar'}</button></div>
+    <RequisitosCita cita={cita}/>
     {onGestionar && <button className="btn sec sm" style={{ marginTop: 12 }} onClick={onGestionar}>Cambiar o cancelar mi cita</button>}
   </div>;
 }
