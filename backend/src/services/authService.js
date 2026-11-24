@@ -21,8 +21,8 @@ class AuthService {
     if (!correo || !password) throw fallo('El correo y la contraseña son requeridos');
     const [filas] = await pool.execute('SELECT u.id_usuario, u.usuario, u.correo, u.password, r.nombre AS rol FROM usuarios u INNER JOIN roles r ON r.id_rol = u.fk_rol WHERE u.correo = ?', [String(correo).trim()]);
     const u = filas[0];
-    // Mismo mensaje exista o no el correo: no revela qué cuentas están registradas.
-    if (!u || !(await bcrypt.compare(String(password), u.password))) throw fallo('Credenciales incorrectas', 401);
+
+    if (!u || !['Administrador', 'Agente'].includes(u.rol) || !(await bcrypt.compare(String(password), u.password))) throw fallo('Credenciales incorrectas', 401);
     const { password: _h, ...seguro } = u;
     return { usuario: seguro, token: generarToken(seguro) };
   }
