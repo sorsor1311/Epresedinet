@@ -10,6 +10,8 @@ export default function FlujoCita({ propiedad, interesadoId, onInteresado, onLis
   const [paso, setPaso] = useState(interesadoId ? 'horario' : 'datos');
   const [id, setId] = useState(interesadoId || null);
   const [hora, setHora] = useState({ fecha: '', hora: '' });
+  const [tipoPersona, setTipoPersona] = useState('');
+  const [modalidad, setModalidad] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
 
@@ -23,7 +25,7 @@ export default function FlujoCita({ propiedad, interesadoId, onInteresado, onLis
   }
   async function agendar() {
     setOcupado(true); setError('');
-    try { onListo(await api('/atencion/citas', { metodo: 'POST', cuerpo: { id_interesado: id, id_propiedad: propiedad.id_propiedad, ...hora } })); }
+    try { onListo(await api('/atencion/citas', { metodo: 'POST', cuerpo: { id_interesado: id, id_propiedad: propiedad.id_propiedad, ...hora, tipo_persona: tipoPersona, modalidad } })); }
     catch (err) { setError(err.message); toast(err.message, 'error'); } finally { setOcupado(false); }
   }
   if (paso === 'datos') return <form className="form-col" onSubmit={registrar}>
@@ -38,9 +40,11 @@ export default function FlujoCita({ propiedad, interesadoId, onInteresado, onLis
     <button className="btn block" disabled={ocupado}>{ocupado ? 'Guardando…' : 'Continuar'}</button>
   </form>;
   return <div className="form-col">
+    <Campo etiqueta="Tipo de persona"><select required value={tipoPersona} onChange={e => setTipoPersona(e.target.value)}><option value="">Selecciona</option>{['Empleado', 'Independiente', 'Pensionado', 'Persona Jurídica'].map(t => <option key={t}>{t}</option>)}</select></Campo>
+    <Campo etiqueta="Me interesa"><select required value={modalidad} onChange={e => setModalidad(e.target.value)}><option value="">Selecciona</option><option value="arriendo">Arrendar</option><option value="venta">Comprar</option></select></Campo>
     <SelectorHorario valor={hora} onCambio={setHora} autoFoco/>
     {error && <p style={{ color: 'var(--danger)', fontSize: 14 }}>{error}</p>}
-    <button className="btn block" disabled={!hora.hora || ocupado} onClick={agendar}><CalendarCheck size={18}/> {ocupado ? 'Agendando…' : 'Confirmar cita'}</button>
+    <button className="btn block" disabled={!hora.hora || ocupado || !tipoPersona || !modalidad} onClick={agendar}><CalendarCheck size={18}/> {ocupado ? 'Agendando…' : 'Confirmar cita'}</button>
     <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>Te asignaremos automáticamente al asesor con la agenda más libre en ese horario.</p>
   </div>;
 }
