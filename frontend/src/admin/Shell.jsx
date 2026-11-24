@@ -10,13 +10,13 @@ const MENUS = {
     ['Atención al cliente', [['citas', 'Solicitudes y citas', Inbox], ['interesados', 'Clientes interesados', Users], ['historial', 'Búsquedas de clientes', History]]],
     ['Inventario', [['propiedades', 'Propiedades', Building2], ['propietarios', 'Propietarios', Home]]],
     ['Equipo', [['asesores', 'Asesores y horarios', UserCheck]]],
-    ['Operación', [['contratos', 'Contratos', FileText], ['pagos', 'Pagos', Wallet], ['remodelaciones', 'Remodelaciones', Hammer], ['visitas', 'Visitas', MapPinned], ['clientes', 'Clientes registrados', UserRound]]],
+    ['Operación', [['remodelaciones', 'Remodelaciones', Hammer], ['visitas', 'Visitas', MapPinned], ['clientes', 'Clientes', UserRound]]],
     ['Análisis y control', [['reportes', 'Reportes y análisis', BarChart3], ['notificaciones', 'Notificaciones', Bell], ['auditoria', 'Registro de actividad', ShieldCheck]]]
   ],
   Agente: [
     ['Mi trabajo', [['resumen', 'Resumen del día', LayoutDashboard], ['calendario', 'Mi calendario', CalendarDays], ['citas', 'Mis citas', Inbox], ['interesados', 'Mis clientes', Users], ['asesores', 'Mi disponibilidad', UserCheck]]],
     ['Inventario', [['propiedades', 'Propiedades', Building2]]],
-    ['Operación', [['contratos', 'Contratos', FileText], ['visitas', 'Visitas', MapPinned], ['remodelaciones', 'Remodelaciones', Hammer]]],
+    ['Operación', [['visitas', 'Visitas', MapPinned], ['remodelaciones', 'Remodelaciones', Hammer]]],
     ['Seguimiento', [['reportes', 'Reportes y análisis', BarChart3], ['notificaciones', 'Notificaciones', Bell]]]
   ],
   Propietario: [
