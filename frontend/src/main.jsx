@@ -17,6 +17,46 @@ const TIPOS_BASE = { 1: 'Casa', 2: 'Apartamento', 3: 'Lote', 4: 'Local' };
 const usaPanel = u => !!u && ['Administrador', 'Agente'].includes(u.rol);
 const rutaActual = () => location.hash.replace(/^#\/?/, '') || 'inicio';
 
+const SERVICIOS = [
+  [
+    "Servicios inmobiliarios",
+    [
+      "Administración de inmuebles",
+      "Arriendo (requisitos del proceso)",
+      "Compra y venta de inmuebles"
+    ]
+  ],
+  [
+    "Trámites",
+    [
+      "Presupuesto de obra",
+      "Avalúos",
+      "Desenglobe",
+      "Escrituras",
+      "Sucesión",
+      "Certificado de libertad y tradición",
+      "Compraventa (trámite)"
+    ]
+  ],
+  [
+    "Mantenimiento",
+    [
+      "Reparaciones locativas",
+      "Plomería y reparaciones hidráulicas",
+      "Instalaciones y reparaciones eléctricas",
+      "Pintura y resanes",
+      "Reparación de puertas, ventanas y cerraduras",
+      "Adecuaciones y remodelaciones",
+      "Mantenimiento de techos, pisos y paredes",
+      "Reparaciones generales de infraestructura"
+    ]
+  ]
+];
+
+function Servicios() {
+  return <><div className="pagina-cab"><div className="contenedor"><span className="ceja">EPRESEDI S.A.S.</span><h1>Nuestros servicios</h1><p>Soluciones inmobiliarias, trámites y mantenimiento.</p></div></div><div className="contenedor" style={{ paddingBottom: 40 }}>{SERVICIOS.map(([categoria, servicios]) => <section className="seccion" key={categoria}><h2>{categoria}</h2><div className="rejilla-inm">{servicios.map(servicio => <article className="inm" key={servicio}><div className="inm-info"><h3>{servicio}</h3></div></article>)}</div></section>)}</div></>;
+}
+
 function App() {
   const toast = useToast();
   const fav = useFavoritos();
@@ -59,7 +99,7 @@ function App() {
       ? <Panel usuario={usuario} seccion={sub} ir={irPanel} onSalir={() => salir()} irSitio={() => ir('inicio')} onPerfil={actualizarPerfil}/>
       : <div className="contenedor" style={{ paddingTop: 80 }}><Vacio icono={ShieldAlert} titulo="Acceso restringido" texto="Esta sección es solo para el personal de EPRESEDI."><button className="btn" onClick={() => ir('acceso')}>Iniciar sesión</button></Vacio></div>;
   }
-  const enlaces = [['inicio', 'Inicio'], ['propiedades', 'Propiedades'], ['asistente', 'Asistente']];
+  const enlaces = [['inicio', 'Inicio'], ['propiedades', 'Propiedades'], ['servicios', 'Servicios'], ['asistente', 'Asistente']];
   return <div className="app">
     <header className="cab"><div className="contenedor cab-in">
       <button className="marca" onClick={() => ir('inicio')} aria-label="Ir al inicio"><img src="/epresedi-logo.png" alt="Logo EPRESEDI"/><span><b>EPRESEDI</b><small>GESTIÓN INMOBILIARIA</small></span></button>
@@ -75,10 +115,11 @@ function App() {
     <main>
       {raiz === 'inicio' && <Inicio propiedades={propiedades} tipos={tipos} ir={ir}/>}
       {raiz === 'propiedades' && <Catalogo key={JSON.stringify(filtros)} propiedades={propiedades} tipos={tipos} cargando={cargando} filtroInicial={filtros}/>}
+      {raiz === 'servicios' && <Servicios/>}
       {raiz === 'asistente' && <Asistente tipos={tipos}/>}
       {raiz === 'acceso' && <Acceso onEntrar={entrar}/>}
       {raiz === 'cuenta' && sub === 'lista' && <Cuenta usuario={usuario} tab={sub} ir={ir} propiedades={propiedades} tipos={tipos} onPerfil={actualizarPerfil}/>}
-      {!['inicio', 'propiedades', 'asistente', 'acceso', 'cuenta'].includes(raiz) && <div className="contenedor"><Vacio titulo="Página no encontrada"><button className="btn" onClick={() => ir('inicio')}>Volver al inicio</button></Vacio></div>}
+      {!['inicio', 'propiedades', 'asistente', 'acceso', 'cuenta', 'servicios'].includes(raiz) && <div className="contenedor"><Vacio titulo="Página no encontrada"><button className="btn" onClick={() => ir('inicio')}>Volver al inicio</button></Vacio></div>}
     </main>
     <footer className="pie"><div className="contenedor pie-in">
       <div className="marca"><img src="/epresedi-logo.png" alt="" style={{ width: 40, height: 40 }}/><span><b>EPRESEDI S.A.S.</b><small>EMPRESA PRESTADORA DE SERVICIOS DIVERSOS</small></span></div>
