@@ -44,7 +44,7 @@ export function DetalleInmueble({ p, tipo, onCerrar }) {
   const [cita, setCita] = useState(null);
   const [interesado, setInteresado] = useState(null);
   const fav = useFavoritos();
-  const fotos = (p.fotos?.length ? p.fotos : []).map(urlFoto);
+  const fotos = (p.fotos?.length ? p.fotos : []).slice(0, 10).map(urlFoto);
   useEffect(() => { api('/atencion/propiedad/' + p.id_propiedad + '/consulta', { metodo: 'POST' }).catch(() => {}); }, [p.id_propiedad]);
   const titulo = vista === 'detalle' ? p.direccion : vista === 'cita' ? 'Agenda tu cita' : vista === 'listo' ? 'Cita confirmada' : 'Gestiona tu cita';
   return <Modal titulo={titulo} subtitulo={vista === 'detalle' ? `${tipo} · ${p.zona || ''}` : p.direccion} onCerrar={onCerrar} ancho={vista === 'detalle' ? 920 : 560}>
@@ -89,7 +89,7 @@ export default function Catalogo({ propiedades, tipos, cargando, filtroInicial =
       if (f.zona && p.zona !== f.zona) return false;
       if (f.hab && (p.habitaciones ?? -1) < Number(f.hab)) return false;
       if (f.max) { const ref = f.modalidad === 'arriendo' ? x.arriendo : f.modalidad === 'venta' ? x.venta : (x.venta ?? x.arriendo); if (ref == null || ref > Number(f.max)) return false; }
-      return !q || `${p.direccion} ${p.zona || ''} ${p.descripcion || ''}`.toLowerCase().includes(q);
+      return !q || `${p.direccion} ${p.barrio || ''} ${p.zona || ''} ${p.descripcion || ''}`.toLowerCase().includes(q);
     });
     const precio = p => precioInmueble(p).venta ?? precioInmueble(p).arriendo ?? 0;
     if (f.orden === 'menor') r.sort((a, b) => precio(a) - precio(b)); if (f.orden === 'mayor') r.sort((a, b) => precio(b) - precio(a));
