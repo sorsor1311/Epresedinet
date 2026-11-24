@@ -19,12 +19,14 @@ exports.disponibilidad = ejecutar(async (req, res) => {
 });
 
 exports.solicitar = ejecutar(async (req, res) => {
-  const { id_interesado, id_propiedad, fecha, hora } = req.body;
+  const { id_interesado, id_propiedad, fecha, hora, tipo_persona, modalidad } = req.body;
+  if (!['Empleado', 'Independiente', 'Pensionado', 'Persona Jurídica'].includes(tipo_persona)) throw fallo('Selecciona un tipo de persona válido');
+  if (!['venta', 'arriendo'].includes(modalidad)) throw fallo('Selecciona compra o arriendo');
   if (![id_interesado, id_propiedad].every(v => Number.isInteger(Number(v)) && Number(v) > 0)) throw fallo('Selecciona un interesado y una propiedad');
-  const cita = await C.crearCita({ id_interesado: Number(id_interesado), id_propiedad: Number(id_propiedad), fecha, hora });
+  const cita = await C.crearCita({ id_interesado: Number(id_interesado), id_propiedad: Number(id_propiedad), fecha, hora, notas: `Tipo de persona: ${tipo_persona}. Interés: ${modalidad === 'venta' ? 'Compra' : 'Arriendo'}.` });
   const [[d]] = await pool.execute(`${C.SELECT_CITA} WHERE s.id_solicitud = ?`, [cita.id_solicitud]);
   await C.avisarCita(d, cita.codigo_gestion);
-  res.status(201).json({ success: true, data: { ...cita, asesor: d.agente, fecha_contacto: d.fecha_contacto, propiedad: d.propiedad } });
+  res.status(201).json({ success: true, data: { ...cita, asesor: d.agente, fecha_contacto: d.fecha_contacto, propiedad: d.propiedad, tipo_persona, modalidad } });
 });
 
 exports.consultarPorCodigo = ejecutar(async (req, res) => {
