@@ -1,4 +1,4 @@
-/* ===== Panel interno (Administrador, Asesor y Propietario): estilo sobrio e institucional ===== */
+
 .shell{--p-bg:#f3f5f9;--p-borde:#dfe5ee;--p-borde2:#edf0f5;--p-texto:#1a2b42;--p-muted:#64768d;--navy:#0b2650;
   display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;background:var(--p-bg);color:var(--p-texto);font-size:14px}
 .shell .btn{border-radius:7px;font-size:13.5px;padding:9px 14px}
@@ -8,7 +8,7 @@
 .shell .badge{border-radius:4px;font-weight:600;font-size:12px;padding:2px 8px;letter-spacing:.01em}
 .shell .modal{border-radius:10px}.shell .modal-cab h2{font-size:18px}
 
-/* Barra lateral */
+
 .side{background:var(--navy);color:#c3d1e6;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:30}
 .side-marca{display:flex;gap:12px;align-items:center;padding:18px;border-bottom:1px solid #ffffff1c;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;color:#fff}
 .side-marca img{width:38px;height:38px;border-radius:50%;background:#fff}
@@ -23,7 +23,7 @@
 .side-item .cuenta{margin-left:auto;background:var(--dorado);color:#3a2a05;border-radius:10px;font-size:11px;padding:0 7px;font-weight:700}
 .side-pie{padding:12px 18px;border-top:1px solid #ffffff1c;font-size:12px;color:#8ea6c8}
 
-/* Barra superior */
+
 .main{min-width:0;display:flex;flex-direction:column}
 .topbar{height:60px;background:#fff;border-bottom:1px solid var(--p-borde);display:flex;align-items:center;gap:14px;padding:0 28px;position:sticky;top:0;z-index:20}
 .migas{display:flex;align-items:center;gap:8px;color:var(--p-muted);font-size:13.5px}.migas b{color:var(--p-texto);font-weight:600}
@@ -39,7 +39,7 @@
 .menu-flot hr{border:0;border-top:1px solid var(--p-borde2);margin:5px 0}
 .burger{display:none}
 
-/* Contenido */
+
 .pagina{padding:26px 28px 64px;width:100%;max-width:1480px}
 .ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--p-borde);flex-wrap:wrap}
 .ph h1{font-size:22px;color:var(--navy);font-weight:700;letter-spacing:-.01em}.ph p{color:var(--p-muted);margin-top:5px;font-size:14px}
@@ -51,14 +51,14 @@
 .cols{display:grid;gap:18px}.cols.c21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}.cols.c11{grid-template-columns:repeat(2,minmax(0,1fr))}.cols.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .apilar{display:flex;flex-direction:column;gap:18px}
 
-/* Indicadores */
+
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));background:#fff;border:1px solid var(--p-borde);border-radius:8px;margin-bottom:18px;overflow:hidden}
 .stat{padding:16px 18px;border-right:1px solid var(--p-borde2);border-bottom:1px solid var(--p-borde2);margin:0 -1px -1px 0;display:flex;flex-direction:column;gap:6px;min-width:0}.stat:last-child{border-right:0}
 .stat label{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--p-muted);font-weight:700}
 .stat b{font-size:27px;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1.1;font-weight:700}
 .stat small{color:var(--p-muted);font-size:12.5px}
 
-/* Tablas */
+
 .tbl-caja{background:#fff;border:1px solid var(--p-borde);border-radius:8px;overflow:auto}
 .shell table{font-size:13.5px}
 .shell th{background:#f6f8fb;color:#52657d;font-size:11.5px;letter-spacing:.06em;padding:10px 16px;border-bottom:1px solid var(--p-borde)}
@@ -71,12 +71,12 @@
 .herr{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
 .herr .grow{flex:1}
 
-/* Pestañas */
+
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--p-borde);margin-bottom:18px}
 .tabs button{background:none;border:0;padding:10px 16px;font-weight:600;font-size:13.5px;color:var(--p-muted);border-bottom:2px solid transparent;margin-bottom:-1px}
 .tabs button.on{color:var(--azul);border-bottom-color:var(--azul)}.tabs button:hover{color:var(--p-texto)}
 
-/* Gráficos */
+
 .grafico{width:100%;height:auto;display:block}
 .grafico text{font-family:var(--fuente);font-size:11px;fill:#64768d}
 .leyenda{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--p-muted);margin-top:10px}.leyenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
@@ -88,18 +88,18 @@
 .emb-paso .pista{height:26px;background:#e9eef5;border-radius:4px;overflow:hidden}.emb-paso .rell{height:100%;display:flex;align-items:center;padding-left:10px;color:#fff;font-weight:600;font-size:12.5px;border-radius:4px}
 .apilada{display:flex;height:14px;border-radius:4px;overflow:hidden;background:#e9eef5}.apilada i{display:block;height:100%}
 
-/* Fotos (gestor) */
+
 .fotos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .foto-it{position:relative;aspect-ratio:4/3;border-radius:7px;overflow:hidden;border:1px solid var(--p-borde);background:#eef2f7}.foto-it img{width:100%;height:100%;object-fit:cover}
 .foto-it button{position:absolute;top:5px;right:5px;background:#0b2650cc;color:#fff;border:0;border-radius:5px;width:26px;height:26px;display:grid;place-items:center}
 .zona-subida{border:1.5px dashed #b6c4d8;border-radius:8px;padding:18px;text-align:center;color:var(--p-muted);background:#fafbfd;font-size:13.5px}
 
-/* Tarjetas de inmueble (propietario) */
+
 .inm-prop{display:grid;grid-template-columns:150px 1fr auto;gap:18px;padding:16px;align-items:center;border-top:1px solid var(--p-borde2)}.inm-prop:first-child{border-top:0}
 .inm-prop .foto{aspect-ratio:4/3;border-radius:7px;overflow:hidden;background:#dfe9f5}.inm-prop .foto img{width:100%;height:100%;object-fit:cover}.inm-prop .foto .inm-ph{min-height:0}
 .mini-datos{display:flex;gap:22px;flex-wrap:wrap;margin-top:8px}.mini-datos div{font-size:12.5px;color:var(--p-muted)}.mini-datos b{display:block;font-size:17px;color:var(--navy)}
 
-/* Agenda del día */
+
 .agenda-it{display:grid;grid-template-columns:64px 1fr auto;gap:14px;padding:12px 18px;border-top:1px solid var(--p-borde2);align-items:center}.agenda-it:first-child{border-top:0}
 .agenda-it .hora-t{font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}.agenda-it .hora-t small{display:block;font-weight:500;color:var(--p-muted);font-size:11.5px}
 
@@ -110,3 +110,13 @@
   .burger{display:grid}.topbar{padding:0 14px}.pagina{padding:20px 14px 60px}
   .inm-prop{grid-template-columns:1fr}.usuario-btn div{display:none}
 }
+
+[data-tema="oscuro"] .shell{--p-bg:#111827;--p-borde:#40516a;--p-borde2:#34445a;--p-texto:#e5edf8;--p-muted:#afc0d6;--navy:#b9d5ff;color-scheme:dark}
+[data-tema="oscuro"] .shell .side{background:#142238}
+[data-tema="oscuro"] .shell :is(.cd,.stats,.tbl-caja,.topbar,.menu-flot,.zona-subida,.foto-it){background:#1c293b;color:var(--p-texto)}
+[data-tema="oscuro"] .shell :is(th,.pista,.apilada){background:#304158;color:var(--p-texto)}
+[data-tema="oscuro"] .shell :is(.icon-btn,.usuario-btn){color:var(--p-texto)}
+[data-tema="oscuro"] .shell :is(.icon-btn,.usuario-btn,.menu-flot button):hover,[data-tema="oscuro"] .shell tr:hover td{background:#293c53}
+[data-tema="oscuro"] .shell .grafico text{fill:#afc0d6}
+[data-tema="oscuro"] .marca b{color:#d5e6ff}
+[data-tema="oscuro"] .marca small{color:#8bd5ef}

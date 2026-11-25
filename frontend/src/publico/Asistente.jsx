@@ -3,6 +3,7 @@ import { Bot, Send, RotateCcw, MapPin, CalendarCheck, Sparkles, KeyRound } from 
 import { api, dinero, precioInmueble, sesion } from '../api.js';
 import { Modal, FotoInmueble, useToast } from '../ui.jsx';
 import FlujoCita, { ConfirmacionCita, GestionarCita } from './FlujoCita.jsx';
+import { SERVICIOS, SolicitarServicio } from './Servicios.jsx';
 import { DetalleInmueble } from './Catalogo.jsx';
 
 const idSesion = (() => {
@@ -41,6 +42,7 @@ function Resultado({ p, tipo, onDetalle, onContacto }) {
 export default function Asistente({ tipos }) {
   const toast = useToast();
   const [mensajes, setMensajes] = useState([]);
+  const [servicio, setServicio] = useState('');
   const [paso, setPaso] = useState('inicio');
   const [escribiendo, setEscribiendo] = useState(false);
   const [filtros, setFiltros] = useState({ tipo: '', modalidad: '', zona: '', presupuesto: 0 });
@@ -59,10 +61,9 @@ export default function Asistente({ tipos }) {
   const empezar = useCallback(async () => {
     const mia = ++corrida.current;
     setMensajes([]); setFiltros({ tipo: '', modalidad: '', zona: '', presupuesto: 0 }); setVistos([]); setPaso('inicio');
-    await decir('¡Hola! Soy el asistente de EPRESEDI. Te voy a hacer unas preguntas rápidas para encontrar el inmueble que mejor se ajuste a lo que necesitas.', 500);
+    await decir('¡Hola! Soy el asistente de EPRESEDI. ¿En qué podemos ayudarte?', 500);
     if (mia !== corrida.current) return;
-    await decir('Primero, ¿qué tipo de inmueble estás buscando?', 500);
-    if (mia === corrida.current) setPaso('tipo');
+    if (mia === corrida.current) setPaso('menu');
   }, [decir]);
   useEffect(() => { empezar(); api('/atencion/zonas').then(setZonas).catch(() => {}); }, [empezar]);
   useEffect(() => { hilo.current?.scrollTo({ top: hilo.current.scrollHeight, behavior: 'smooth' }); }, [mensajes, escribiendo]);
@@ -157,6 +158,8 @@ export default function Asistente({ tipos }) {
         {escribiendo && <div className="msg"><div className="avatar"><Bot size={16}/></div><div className="burbuja escribiendo"><i/><i/><i/></div></div>}
       </div>
       <div className="chat-pie">
+        {paso === 'menu' && <div className="chips"><button className="chip" onClick={() => { yo('Buscar inmueble'); setPaso('tipo'); }}>Buscar inmueble para comprar o arrendar</button><button className="chip" onClick={() => setPaso('servicios')}>Consultar o solicitar servicios</button><button className="chip" onClick={() => setGestionar(true)}>Gestionar cita</button></div>}
+        {paso === 'servicios' && <div>{SERVICIOS.map(([grupo, lista]) => <div key={grupo}><b>{grupo}</b><div className="chips">{lista.map(x => <button key={x} className="chip" onClick={() => setServicio(x)}>{x}</button>)}</div></div>)}<button className="chip" onClick={empezar}>Volver al inicio</button></div>}
         {paso === 'tipo' && <div className="chips">{Object.values(tipos).map(t => <button key={t} className="chip" onClick={() => elegirTipo(t)}>{t}</button>)}<button className="chip" onClick={() => elegirTipo('')}>Cualquiera</button></div>}
         {paso === 'modalidad' && <div className="chips"><button className="chip" onClick={() => elegirModalidad('compra')}>Comprar</button><button className="chip" onClick={() => elegirModalidad('arriendo')}>Arrendar</button></div>}
         {paso === 'zona' && <div className="chips">{zonas.map(z => <button key={z} className="chip" onClick={() => elegirZona(z)}>{z}</button>)}<button className="chip" onClick={() => elegirZona('')}>Cualquier zona</button></div>}
@@ -173,6 +176,7 @@ export default function Asistente({ tipos }) {
       <div className="tarjeta tarjeta-pad"><h3>¿Ya tienes una cita?</h3><p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.55, marginBottom: 12 }}>Cámbiala o cancélala con el código que recibiste al confirmar tu cita.</p>
         <button className="btn sec block" onClick={() => setGestionar(true)}><KeyRound size={16}/> Gestionar mi cita</button></div>
     </aside>
+    {servicio && <SolicitarServicio key={servicio} servicio={servicio} onCerrar={() => setServicio('')}/>}
     {detalle && <DetalleInmueble p={detalle} tipo={tipoDe(detalle)} onCerrar={() => setDetalle(null)}/>}
     {gestionar && <Modal titulo="Gestiona tu cita" subtitulo="Reprograma o cancela con tu código" onCerrar={() => setGestionar(false)}><GestionarCita/></Modal>}
   </div></div>;

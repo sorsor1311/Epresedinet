@@ -26,7 +26,7 @@ export default function Resumen({ usuario, ir }) {
       <Stat t="Citas hoy" v={d.citas_hoy} s={d.citas_hoy ? 'programadas para hoy' : 'sin citas para hoy'}/>
       <Stat t="Próximos 7 días" v={d.citas_semana} s="citas por atender"/>
       <Stat t="Citas pendientes" v={d.citas_pendientes}/>
-      {esAdmin ? <><Stat t="Inmuebles disponibles" v={disponibles} s={`de ${d.propiedades} registrados`}/><Stat t="Clientes interesados" v={d.interesados}/><Stat t="Pagos registrados" v={dinero(d.ingresos)}/></>
+      {esAdmin ? <><Stat t="Inmuebles disponibles" v={disponibles} s={`de ${d.propiedades} registrados`}/><Stat t="Clientes interesados" v={d.interesados}/></>
         : <><Stat t="Atendidas" v={rep?.agentes?.[0]?.atendidas ?? 0} s="citas completadas"/><Stat t="Inmuebles disponibles" v={disponibles}/></>}
     </div>
     <div className="cols c21">
