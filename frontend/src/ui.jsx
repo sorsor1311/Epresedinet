@@ -1,8 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { X, CheckCircle2, AlertCircle, Info, Home, Building2, Trees, Store, Inbox } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Info, Home, Building2, Trees, Store, Inbox, Eye, EyeOff, Sun, Moon } from 'lucide-react';
 import { TONO_ESTADO, cap, urlFoto } from './api.js';
 
-// ---------- Notificaciones (toasts) ----------
 const ContextoToast = createContext(() => {});
 export const useToast = () => useContext(ContextoToast);
 export function ProveedorToast({ children }) {
@@ -20,7 +19,6 @@ export function ProveedorToast({ children }) {
   </ContextoToast.Provider>;
 }
 
-// ---------- Modal y panel lateral ----------
 function useCierre(cerrar) {
   useEffect(() => {
     const tecla = e => e.key === 'Escape' && cerrar();
@@ -40,13 +38,26 @@ export function Modal({ titulo, subtitulo, onCerrar, ancho = 560, children, late
     </div></div>;
 }
 
-// ---------- Piezas pequeñas ----------
 export const Badge = ({ tono, children }) => <span className={'badge ' + (tono || '')}>{children}</span>;
 export const BadgeEstado = ({ estado }) => <span className={'etq ' + (TONO_ESTADO[estado] || '')}>{cap(estado)}</span>;
 export const Cargando = ({ texto = 'Cargando…' }) => <div className="cargando"><span className="giro"/> {texto}</div>;
 export const Vacio = ({ icono: Icono = Inbox, titulo, texto, children }) => <div className="vacio"><Icono size={42}/><h3>{titulo}</h3>{texto && <p>{texto}</p>}{children}</div>;
 export const Aviso = ({ tipo = '', children }) => <div className={'aviso ' + tipo} role={tipo === 'error' ? 'alert' : undefined}><Info size={18}/><div>{children}</div></div>;
-export const Campo = ({ etiqueta, ayuda, children, className = '' }) => <label className={'campo ' + className}>{etiqueta}{children}{ayuda && <small>{ayuda}</small>}</label>;
+function Clave({ campo }) {
+  const [visible, setVisible] = useState(false);
+  return <span className="clave-campo">{React.cloneElement(campo, { type: visible ? 'text' : 'password' })}<button type="button" className="btn ghost icono" aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={visible} onClick={() => setVisible(v => !v)}>{visible ? <EyeOff size={18}/> : <Eye size={18}/>}</button></span>;
+}
+export const Campo = ({ etiqueta, ayuda, children, className = '' }) => <label className={'campo ' + className}>{etiqueta}{React.Children.map(children, c => React.isValidElement(c) && c.type === 'input' && c.props.type === 'password' ? <Clave campo={c}/> : c)}{ayuda && <small>{ayuda}</small>}</label>;
+export function Tema() {
+  const [oscuro, setOscuro] = useState(() => localStorage.getItem('epresedi-tema') === 'oscuro');
+  useEffect(() => { document.documentElement.dataset.tema = oscuro ? 'oscuro' : 'claro'; localStorage.setItem('epresedi-tema', oscuro ? 'oscuro' : 'claro'); }, [oscuro]);
+  return <button type="button" className="btn ghost icono" title={oscuro ? 'Modo claro' : 'Modo oscuro'} aria-label={oscuro ? 'Activar modo claro' : 'Activar modo oscuro'} onClick={() => setOscuro(v => !v)}>{oscuro ? <Sun size={19}/> : <Moon size={19}/>}</button>;
+}
+export function MapaInmueble({ propiedad }) {
+  const ubicacion = [propiedad.direccion, propiedad.barrio, propiedad.zona, propiedad.municipio, 'Colombia'].filter(Boolean).join(', ');
+  const q = encodeURIComponent(ubicacion);
+  return <section style={{ marginTop: 14 }}><h4>Ubicación aproximada</h4><iframe title="Mapa de ubicación aproximada" src={'https://maps.google.com/maps?q=' + q + '&output=embed'} loading="lazy" referrerPolicy="no-referrer-when-downgrade" style={{ width: '100%', height: 220, border: 0, borderRadius: 8 }}/><a href={'https://www.google.com/maps/search/?api=1&query=' + q} target="_blank" rel="noopener noreferrer">Consultar en Google Maps</a></section>;
+}
 
 export const iconoTipo = nombre => ({ casa: Home, apartamento: Building2, lote: Trees, local: Store }[String(nombre || '').toLowerCase()] || Building2);
 export function FotoInmueble({ propiedad, tipo, alt }) {

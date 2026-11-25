@@ -1,30 +1,9 @@
 import React, { useState } from 'react';
-import { Database, Pencil, Archive, Plus, Trash2, Upload, X, Copy, Check, Info } from 'lucide-react';
+import { Pencil, Archive, Plus, Upload, X } from 'lucide-react';
 import { api, subir, dinero, ESTADOS_INMUEBLE, cap, precioInmueble, urlFoto } from '../api.js';
-import { Modal, Campo, Badge, BadgeEstado, FotoInmueble, usePeticion, useToast } from '../ui.jsx';
+import { Modal, Campo, MapaInmueble, Badge, BadgeEstado, FotoInmueble, usePeticion, useToast } from '../ui.jsx';
 import Tabla from './Tabla.jsx';
 import { Cab } from './Shell.jsx';
-
-const EJEMPLO = `CALL sp_registrar_propiedad(
-  'Apartamento',                 -- Casa | Apartamento | Lote | Local
-  'propietario@correo.com',      -- correo del propietario
-  'Calle 10 # 25-40, Medellín',  -- dirección
-  'El Poblado',                  -- zona / barrio / municipio
-  3, 2, 78.50,                   -- habitaciones, baños, área m²
-  380000000, 0,                  -- precio venta, precio arriendo (0 si no aplica)
-  'https://.../foto.jpg',        -- foto de portada (o NULL)
-  'Descripción del inmueble.'
-);
-CALL sp_agregar_foto(ID_DEL_INMUEBLE, 'https://.../otra-foto.jpg', 2);`;
-
-function GuiaBD({ onCerrar }) {
-  const [ok, setOk] = useState(false);
-  return <Modal titulo="Carga de inmuebles por base de datos" subtitulo="Procedimiento almacenado con validaciones" onCerrar={onCerrar} ancho={680}>
-    <p style={{ fontSize: 14, lineHeight: 1.6, color: '#3d5775', marginBottom: 12 }}>Los inmuebles pueden registrarse con <code>sp_registrar_propiedad</code>. La base de datos valida precios, estado, área y enlaces de fotos. Plantilla completa: <code>database/02_catalogo_inicial.sql</code>.</p>
-    <div style={{ position: 'relative' }}><pre style={{ background: '#0b2650', color: '#d9e8f8', padding: 16, borderRadius: 8, fontSize: 12.5, overflow: 'auto', margin: 0 }}>{EJEMPLO}</pre>
-      <button className="btn sm sec" style={{ position: 'absolute', top: 10, right: 10 }} onClick={() => { navigator.clipboard?.writeText(EJEMPLO); setOk(true); setTimeout(() => setOk(false), 2000); }}>{ok ? <Check size={14}/> : <Copy size={14}/>} {ok ? 'Copiado' : 'Copiar'}</button></div>
-  </Modal>;
-}
 
 function Fotos({ p, onCambio }) {
   const toast = useToast();
@@ -49,6 +28,9 @@ function Fotos({ p, onCambio }) {
 function Formulario({ inicial, tipos, propietarios, onCerrar, onGuardado }) {
   const toast = useToast();
   const [p, setP] = useState(inicial);
+  const [direccion, setDireccion] = useState(inicial.direccion || '');
+  const [zona, setZona] = useState(inicial.zona || '');
+  const [mapa, setMapa] = useState(null);
   const [ocupado, setOcupado] = useState(false);
   const refrescar = async () => { const [x, fs] = await Promise.all([api('/propiedades/' + p.id_propiedad), api('/propiedades')]); const fila = fs.find(y => y.id_propiedad === p.id_propiedad); setP({ ...fila, ...x }); onGuardado(false); };
   async function guardar(e) {
@@ -68,8 +50,9 @@ function Formulario({ inicial, tipos, propietarios, onCerrar, onGuardado }) {
     <form onSubmit={guardar}><div className="rejilla-form">
       <Campo etiqueta="Tipo de inmueble"><select name="fk_tipo_propiedad" required defaultValue={v('fk_tipo_propiedad')}><option value="">Selecciona…</option>{Object.entries(tipos).map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select></Campo>
       <Campo etiqueta="Propietario"><select name="fk_propietario" required defaultValue={v('fk_propietario')}><option value="">Selecciona…</option>{propietarios.map(x => <option key={x.id_propietario} value={x.id_propietario}>{x.nombre}</option>)}</select></Campo>
-      <Campo etiqueta="Dirección" className="completo"><input name="direccion" required defaultValue={v('direccion')} maxLength={150}/></Campo>
-      <Campo etiqueta="Zona / barrio / municipio"><input name="zona" defaultValue={v('zona')}/></Campo>
+      <Campo etiqueta="Dirección" className="completo"><input name="direccion" required value={direccion} onChange={e => { setDireccion(e.target.value); setMapa(null); }} maxLength={150}/></Campo>
+      <Campo etiqueta="Zona / barrio / municipio"><input name="zona" value={zona} onChange={e => { setZona(e.target.value); setMapa(null); }}/></Campo>
+      <div className="completo"><button type="button" className="btn sec" disabled={!direccion.trim()} onClick={() => setMapa({ direccion, zona })}>Consultar ubicación</button>{mapa && <MapaInmueble propiedad={mapa}/>}</div>
       <Campo etiqueta="Estado"><select name="estado" defaultValue={v('estado') || 'disponible'}>{ESTADOS_INMUEBLE.map(e => <option key={e} value={e}>{cap(e)}</option>)}</select></Campo>
       <Campo etiqueta="Precio de venta (COP)" ayuda="0 si no está en venta"><input name="precio_venta" type="number" min="0" step="any" defaultValue={v('precio_venta')}/></Campo>
       <Campo etiqueta="Canon de arriendo (COP)" ayuda="0 si no está en arriendo"><input name="precio_arrendamiento" type="number" min="0" step="any" defaultValue={v('precio_arrendamiento')}/></Campo>
@@ -88,27 +71,18 @@ export default function Propiedades({ usuario }) {
   const esAdmin = usuario.rol === 'Administrador';
   const [estado, setEstado] = useState('');
   const [tipo, setTipo] = useState('');
-  const [guia, setGuia] = useState(false);
   const [form, setForm] = useState(null);
   const r = usePeticion(() => Promise.all([api('/propiedades'), api('/tipos-propiedad'), api('/config'), esAdmin ? api('/propietarios') : Promise.resolve([])]), []);
   const tipos = Object.fromEntries((r.datos?.[1] || []).map(t => [t.id_tipo_propiedad, t.nombre]));
-  const alta = r.datos?.[2]?.alta_inmuebles_admin;
   const filas = (r.datos?.[0] || []).filter(p => (!estado || p.estado === estado) && (!tipo || String(p.fk_tipo_propiedad) === tipo));
   async function cambiarEstado(p, nuevo) { try { await api('/propiedades/' + p.id_propiedad, { metodo: 'PUT', cuerpo: { estado: nuevo } }); toast(`Inmueble marcado como ${nuevo}`); r.recargar(); } catch (e) { toast(e.message, 'error'); } }
-  async function eliminar(p) {
-    if (!window.confirm(`¿Eliminar definitivamente "${p.direccion}"? Si tiene contratos o citas no se podrá; en ese caso márcalo como inactivo.`)) return;
-    try { await api('/propiedades/' + p.id_propiedad, { metodo: 'DELETE' }); toast('Inmueble eliminado'); r.recargar(); } catch (e) { toast(e.message, 'error'); }
-  }
   async function abrirEdicion(p) {
-    // trae los ids de foto para poder quitarlas
     const d = await api('/propiedades/' + p.id_propiedad).catch(() => p);
     setForm({ ...p, ...d });
   }
   return <div>
     <Cab titulo="Inventario de propiedades" sub="Casas, apartamentos, lotes y locales">
-      {esAdmin && <button className="btn sec" onClick={() => setGuia(true)}><Database size={16}/> Carga por base de datos</button>}
-      {esAdmin && alta && <button className="btn" onClick={() => setForm({})}><Plus size={16}/> Nuevo inmueble</button>}</Cab>
-    {esAdmin && !alta && <div className="aviso" style={{ marginBottom: 16 }}><Info size={18}/><div>Los inmuebles se registran <b>directamente en la base de datos</b>. Desde aquí puedes actualizar su estado, precios y datos. Para habilitar el alta desde este panel (con fotos) define <code>PERMITIR_ALTA_INMUEBLES_ADMIN=true</code> en <code>backend/.env</code>.</div></div>}
+      {esAdmin && !r.cargando && !r.error && <button className="btn" onClick={() => setForm({})}><Plus size={16}/> Nuevo inmueble</button>}</Cab>
     <Tabla cargando={r.cargando} filas={filas} vacio="No hay inmuebles registrados."
       herramientas={<><select className="input" style={{ width: 'auto' }} value={tipo} onChange={e => setTipo(e.target.value)} aria-label="Tipo"><option value="">Todos los tipos</option>{Object.entries(tipos).map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select>
         <select className="input" style={{ width: 'auto' }} value={estado} onChange={e => setEstado(e.target.value)} aria-label="Estado"><option value="">Todos los estados</option>{ESTADOS_INMUEBLE.map(e => <option key={e} value={e}>{cap(e)}</option>)}</select></>}
@@ -119,8 +93,7 @@ export default function Propiedades({ usuario }) {
         ...(usuario.rol !== 'Propietario' ? [{ t: 'Propietario', f: p => p.propietario_nombre || '—' }] : []),
         { t: 'Precio', f: p => { const x = precioInmueble(p); return <>{x.venta && <div>{dinero(x.venta)} <span className="sub" style={{ display: 'inline' }}>venta</span></div>}{x.arriendo && <div>{dinero(x.arriendo)} <span className="sub" style={{ display: 'inline' }}>/ mes</span></div>}</>; } },
         { t: 'Estado', f: p => esAdmin ? <select className="sel-estado" value={p.estado} onChange={e => cambiarEstado(p, e.target.value)} aria-label={'Estado de ' + p.direccion}>{ESTADOS_INMUEBLE.map(e => <option key={e} value={e}>{cap(e)}</option>)}</select> : <BadgeEstado estado={p.estado}/> }]}
-      acciones={esAdmin ? p => <><button className="btn sm sec" onClick={() => abrirEdicion(p)}><Pencil size={13}/> Editar</button> {p.estado !== 'inactiva' && <button className="btn sm ghost" title="Dar de baja (inactiva)" onClick={() => window.confirm('¿Dar de baja este inmueble? Dejará de mostrarse a los clientes.') && cambiarEstado(p, 'inactiva')}><Archive size={14}/></button>} <button className="btn sm ghost" title="Eliminar" onClick={() => eliminar(p)}><Trash2 size={14}/></button></> : null}/>
-    {guia && <GuiaBD onCerrar={() => setGuia(false)}/>}
+      acciones={esAdmin ? p => <><button className="btn sm sec" onClick={() => abrirEdicion(p)}><Pencil size={13}/> Editar</button> {p.estado !== 'inactiva' && <button className="btn sm ghost" title="Dar de baja (inactiva)" onClick={() => window.confirm('¿Dar de baja este inmueble? Dejará de mostrarse a los clientes.') && cambiarEstado(p, 'inactiva')}><Archive size={14}/></button>}</> : null}/>
     {form && <Formulario inicial={form} tipos={tipos} propietarios={r.datos[3]} onCerrar={() => { setForm(null); r.recargar(); }} onGuardado={cerrar => { r.recargar(); if (cerrar) setForm(null); }}/>}
   </div>;
 }

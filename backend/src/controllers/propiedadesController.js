@@ -49,9 +49,8 @@ exports.obtener = ejecutar(async (req, res) => {
   res.json({ success: true, data: dato });
 });
 
-// RF009 (alta): solo si PERMITIR_ALTA_INMUEBLES_ADMIN=true; de lo contrario se cargan desde la base de datos.
+// RF009: registro de inmuebles por el administrador.
 exports.crear = ejecutar(async (req, res) => {
-  if (!env.altaInmueblesAdmin) throw fallo('Los inmuebles se registran directamente en la base de datos (database/02_catalogo_inicial.sql). Para habilitar el alta desde el panel define PERMITIR_ALTA_INMUEBLES_ADMIN=true en backend/.env.', 405);
   validar(req.body, { completo: true });
   const d = req.body, campos = EDITABLES.filter(k => Object.hasOwn(d, k) && d[k] !== '' && d[k] !== undefined);
   const [r] = await pool.query(`INSERT INTO propiedades (${campos.map(() => '??').join(',')}) VALUES (${campos.map(() => '?').join(',')})`, [...campos, ...campos.map(k => d[k])]);
@@ -78,7 +77,6 @@ exports.eliminar = ejecutar(async (req, res) => {
   res.json({ success: true });
 });
 
-// Fotografías: subida real de archivos (JPG/PNG/WebP validados por contenido) o enlaces.
 exports.subirFotos = [(req, res, next) => recibir(req, res, e => (e ? next(fallo(e.code === 'LIMIT_FILE_SIZE' ? 'Cada foto debe pesar máximo 5 MB' : e.message)) : next())),
   ejecutar(async (req, res) => {
     const [[p]] = await pool.query('SELECT id_propiedad, foto_url FROM propiedades WHERE id_propiedad = ?', [req.params.id]);

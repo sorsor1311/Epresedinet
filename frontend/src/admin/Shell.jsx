@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LayoutDashboard, CalendarDays, Inbox, Users, Building2, UserCheck, BarChart3, Bell, History, FileText, Wallet, Hammer, MapPinned, UserRound, Home, ShieldCheck, Menu, ChevronDown, LogOut, UserCog, Globe, ClipboardList, KeyRound, Briefcase } from 'lucide-react';
 import { api } from '../api.js';
-import { usePeticion } from '../ui.jsx';
+import { usePeticion, Tema } from '../ui.jsx';
 
-// Menú por rol. [clave, etiqueta, icono]
 const MENUS = {
   Administrador: [
     ['Panel', [['resumen', 'Resumen', LayoutDashboard], ['calendario', 'Calendario', CalendarDays]]],
@@ -18,13 +17,9 @@ const MENUS = {
     ['Inventario', [['propiedades', 'Propiedades', Building2]]],
     ['Operación', [['visitas', 'Visitas', MapPinned], ['remodelaciones', 'Remodelaciones', Hammer]]],
     ['Seguimiento', [['reportes', 'Reportes y análisis', BarChart3], ['notificaciones', 'Notificaciones', Bell]]]
-  ],
-  Propietario: [
-    ['Mi cuenta', [['resumen', 'Resumen', LayoutDashboard], ['inmuebles', 'Mis inmuebles', Building2], ['contratos', 'Contratos y pagos', FileText]]]
   ]
 };
 export const seccionesDe = rol => (MENUS[rol] || []).flatMap(([, items]) => items.map(i => i[0])).concat('perfil');
-/** Título de una sección según el menú del rol (cada rol puede llamarla distinto: "Calendario" vs "Mi calendario"). */
 export const tituloDe = (rol, clave) => {
   if (clave === 'perfil') return 'Mi perfil';
   for (const [, items] of MENUS[rol] || []) { const i = items.find(x => x[0] === clave); if (i) return i[1]; }
@@ -43,7 +38,7 @@ export default function Shell({ usuario, seccion, ir, onSalir, irSitio, children
   const nombre = usuario.nombre || usuario.usuario;
   return <div className="shell">
     <aside className={'side' + (abierta ? ' abierta' : '')}>
-      <button className="side-marca" onClick={irSitio} aria-label="Ir al sitio público"><img src="/epresedi-logo.png" alt=""/><span><b>EPRESEDI</b><small>{usuario.rol === 'Propietario' ? 'PORTAL DEL PROPIETARIO' : 'PANEL DE GESTIÓN'}</small></span></button>
+      <button className="side-marca" onClick={() => ir("resumen")} aria-label="Ir al resumen"><img src="/epresedi-logo.png" alt=""/><span><b>EPRESEDI</b><small>{usuario.rol === 'Propietario' ? 'PORTAL DEL PROPIETARIO' : 'PANEL DE GESTIÓN'}</small></span></button>
       <nav className="side-nav" aria-label="Menú principal">
         {menu.map(([grupo, items]) => <React.Fragment key={grupo}><div className="side-grupo">{grupo}</div>
           {items.map(([k, t, I]) => <button key={k} className={'side-item' + (seccion === k ? ' on' : '')} onClick={() => ir(k)}><I size={17}/> {tituloDe(usuario.rol, k)}
@@ -56,14 +51,14 @@ export default function Shell({ usuario, seccion, ir, onSalir, irSitio, children
         <button className="icon-btn burger" onClick={() => setAbierta(!abierta)} aria-label="Menú"><Menu size={20}/></button>
         <div className="migas"><span>{usuario.rol === 'Propietario' ? 'Portal' : 'Gestión'}</span><span>/</span><b>{tituloDe(usuario.rol, seccion)}</b></div>
         <div className="top-der">
-          <button className="icon-btn" title="Ver el sitio público" onClick={irSitio}><Globe size={18}/></button>
+          <Tema/>
           {personal && <button className="icon-btn" title="Notificaciones" onClick={() => ir('notificaciones')}><Bell size={18}/>{n.datos > 0 && <span className="punto-n">{n.datos}</span>}</button>}
           <div className="usuario-menu" ref={ref}>
             <button className="usuario-btn" onClick={() => setMenuU(!menuU)} aria-haspopup="menu" aria-expanded={menuU}>
               <span className="avatar-i">{String(nombre)[0]?.toUpperCase()}</span><div><b>{nombre}</b><small>{usuario.rol === 'Agente' ? 'Asesor' : usuario.rol}</small></div><ChevronDown size={15} color="#64768d"/></button>
             {menuU && <div className="menu-flot" role="menu">
               <button role="menuitem" onClick={() => { setMenuU(false); ir('perfil'); }}><UserCog size={16}/> Mi perfil y contraseña</button>
-              <button role="menuitem" onClick={() => { setMenuU(false); irSitio(); }}><Globe size={16}/> Ver sitio público</button><hr/>
+              <hr/>
               <button role="menuitem" onClick={onSalir}><LogOut size={16}/> Cerrar sesión</button></div>}
           </div>
         </div>

@@ -4,7 +4,7 @@ import { LogIn, LogOut, Menu, X, ShieldAlert, Heart, UserRound, LayoutDashboard 
 import './styles.css';
 import './panel.css';
 import { api, sesion } from './api.js';
-import { ProveedorToast, useToast, Vacio, Modal, Campo } from './ui.jsx';
+import { ProveedorToast, useToast, Vacio, Modal, Campo, Tema } from './ui.jsx';
 import { useFavoritos } from './favoritos.js';
 import Inicio from './publico/Inicio.jsx';
 import Catalogo from './publico/Catalogo.jsx';
@@ -78,12 +78,10 @@ function App() {
 
   useEffect(() => { const f = () => { setRuta(rutaActual()); setMenu(false); window.scrollTo(0, 0); }; window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f); }, []);
   useEffect(() => {
-    // El catálogo público siempre se consulta como visitante: solo inmuebles disponibles.
     Promise.all([api('/propiedades', { token: '' }), api('/tipos-propiedad', { token: '' })])
       .then(([p, t]) => { setPropiedades(p); setTipos(Object.fromEntries(t.map(x => [x.id_tipo_propiedad, x.nombre]))); })
       .catch(e => toast(e.message, 'error')).finally(() => setCargando(false));
   }, [toast]);
-  // Si hay sesión guardada, recupera el nombre del perfil (para saludos y menú de usuario).
   useEffect(() => { if (usuario && !usuario.nombre) api('/auth/me').then(p => actualizarPerfil(p)).catch(() => {}); /* eslint-disable-next-line */ }, []);
 
   const salir = useCallback((aviso = 'Sesión cerrada') => { sesion.cerrar(); setUsuario(null); location.hash = '/inicio'; if (aviso) toast(aviso, 'info'); }, [toast]);
@@ -102,9 +100,10 @@ function App() {
 
   const [raiz, sub] = ruta.split('/');
   const enPanel = raiz === 'panel' || raiz === 'admin';
-  if (enPanel) {
+  useEffect(() => { if (usaPanel(usuario) && !enPanel) location.hash = '/panel/resumen'; }, [usuario, enPanel]);
+  if (enPanel || usaPanel(usuario)) {
     return usaPanel(usuario)
-      ? <Panel usuario={usuario} seccion={sub} ir={irPanel} onSalir={() => salir()} irSitio={() => ir('inicio')} onPerfil={actualizarPerfil}/>
+      ? <Panel usuario={usuario} seccion={enPanel ? sub : 'resumen'} ir={irPanel} onSalir={() => salir()} irSitio={() => irPanel('resumen')} onPerfil={actualizarPerfil}/>
       : <div className="contenedor" style={{ paddingTop: 80 }}><Vacio icono={ShieldAlert} titulo="Acceso restringido" texto="Esta sección es solo para el personal de EPRESEDI."><button className="btn" onClick={() => ir('acceso')}>Iniciar sesión</button></Vacio></div>;
   }
   const enlaces = [['inicio', 'Inicio'], ['propiedades', 'Propiedades'], ['servicios', 'Servicios'], ['asistente', 'Asistente']];
@@ -115,7 +114,7 @@ function App() {
         {enlaces.map(([k, t]) => <a key={k} href={'#/' + k} className={raiz === k ? 'activo' : ''}>{t}</a>)}
         {usaPanel(usuario) && <a href="#/panel/resumen"><LayoutDashboard size={15}/> Mi panel</a>}
       </nav>
-      <div className="cab-acc">
+      <div className="cab-acc"><Tema/>
         <a className="btn ghost sm" href="#/cuenta/lista" title="Mi lista de interés" aria-label="Mi lista de interés" style={{ position: 'relative' }}><Heart size={18}/>{fav.ids.length > 0 && <span style={{ position: 'absolute', top: -2, right: -2, background: '#c0392b', color: '#fff', borderRadius: 9, fontSize: 10, fontWeight: 700, padding: '0 5px' }}>{fav.ids.length}</span>}</a>
         {usuario ? <button className="btn sec sm" onClick={() => salir()}><LogOut size={16}/> Salir</button> : <button className="btn sm" onClick={() => ir('acceso')}><LogIn size={16}/> Ingresar</button>}</div>
       <button className="btn ghost icono menu-mov" onClick={() => setMenu(!menu)} aria-label="Menú">{menu ? <X size={22}/> : <Menu size={22}/>}</button>

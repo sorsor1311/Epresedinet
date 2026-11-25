@@ -139,7 +139,7 @@ export default function Asistente({ tipos }) {
     } catch (err) { setEscribiendo(false); agregar({ de: 'bot', tipo: 'texto', texto: err.message }); }
   }
 
-  const activo = !['inicio', 'espera'].includes(paso);
+  const activo = ['zona', 'presupuesto'].includes(paso);
   const placeholder = paso === 'zona' ? 'Escribe un barrio o municipio…' : paso === 'presupuesto' ? 'Ej: 350 millones' : ['resultados', 'cita', 'fin'].includes(paso) ? 'Escribe una pregunta sobre los inmuebles…' : 'Elige una opción de arriba';
   return <div className="contenedor"><div className="asist">
     <div className="tarjeta chat">
@@ -162,8 +162,8 @@ export default function Asistente({ tipos }) {
         {paso === 'zona' && <div className="chips">{zonas.map(z => <button key={z} className="chip" onClick={() => elegirZona(z)}>{z}</button>)}<button className="chip" onClick={() => elegirZona('')}>Cualquier zona</button></div>}
         {paso === 'presupuesto' && <div className="chips">{PRESUPUESTOS[filtros.modalidad || 'compra'].map(n => <button key={n} className="chip" onClick={() => elegirPresupuesto(n)}>Hasta {abreviar(n)}</button>)}</div>}
         {(paso === 'resultados' || paso === 'fin') && <div className="chips"><button className="chip" onClick={verSimilares} disabled={paso === 'fin'}>Ver opciones similares</button><button className="chip" onClick={empezar}>Cambiar mi búsqueda</button>{paso !== 'fin' && <button className="chip" onClick={finalizar}>Finalizar</button>}</div>}
-        <form onSubmit={enviar}><input className="input" value={texto} onChange={e => setTexto(e.target.value)} placeholder={placeholder} disabled={!activo} aria-label="Mensaje"/>
-          <button className="btn" disabled={!activo || !texto.trim()} aria-label="Enviar"><Send size={17}/></button></form>
+        {activo && <form onSubmit={enviar}><input className="input" value={texto} onChange={e => setTexto(e.target.value)} placeholder={placeholder} disabled={!activo} aria-label="Mensaje"/>
+          <button className="btn" disabled={!activo || !texto.trim()} aria-label="Enviar"><Send size={17}/></button></form>}
       </div>
     </div>
     <aside className="lateral-asist">

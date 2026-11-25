@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, MapPin, BedDouble, Bath, Ruler, Car, CalendarCheck, SearchX, ArrowLeft, Heart } from 'lucide-react';
 import { useFavoritos } from '../favoritos.js';
 import { api, dinero, precioInmueble, urlFoto } from '../api.js';
-import { Modal, Badge, FotoInmueble, Vacio, Campo, iconoTipo, Cargando } from '../ui.jsx';
+import { Modal, Badge, FotoInmueble, Vacio, Campo, iconoTipo, Cargando, MapaInmueble } from '../ui.jsx';
 import FlujoCita, { ConfirmacionCita, GestionarCita } from './FlujoCita.jsx';
 
 export function Especificaciones({ p }) {
@@ -66,6 +66,7 @@ export function DetalleInmueble({ p, tipo, onCerrar }) {
         {p.descripcion && <p style={{ color: '#3d5775', lineHeight: 1.65, fontSize: 14.5, marginBottom: 18 }}>{p.descripcion}</p>}
         <button className="btn lg block" onClick={() => setVista('cita')}><CalendarCheck size={19}/> Quiero que me contacte un asesor</button>
         <button className="btn sec block" style={{ marginTop: 10 }} onClick={() => fav.alternar(p.id_propiedad)}><Heart size={17} fill={fav.esFavorito(p.id_propiedad) ? 'currentColor' : 'none'}/> {fav.esFavorito(p.id_propiedad) ? 'Guardado en mi lista' : 'Guardar en mi lista'}</button>
+        <MapaInmueble propiedad={p}/>
       </div></div>}
     {vista === 'cita' && <><button className="btn ghost sm" style={{ marginBottom: 12 }} onClick={() => setVista('detalle')}><ArrowLeft size={16}/> Volver al inmueble</button>
       <FlujoCita propiedad={p} interesadoId={interesado} onInteresado={setInteresado} onListo={c => { setCita(c); setVista('listo'); }}/></>}
@@ -104,7 +105,7 @@ export default function Catalogo({ propiedades, tipos, cargando, filtroInicial =
         <Campo etiqueta="Buscar" className="buscar"><Search size={17}/><input value={f.q} onChange={e => set('q', e.target.value)} placeholder="Dirección, barrio o palabra clave"/></Campo>
         <Campo etiqueta="Tipo"><select value={f.tipo} onChange={e => set('tipo', e.target.value)}><option value="">Todos</option>{Object.entries(tipos).map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select></Campo>
         <Campo etiqueta="Negociación"><select value={f.modalidad} onChange={e => set('modalidad', e.target.value)}><option value="">Venta o arriendo</option><option value="venta">Venta</option><option value="arriendo">Arriendo</option></select></Campo>
-        <Campo etiqueta="Zona"><select value={f.zona} onChange={e => set('zona', e.target.value)}><option value="">Todas</option>{zonas.map(z => <option key={z}>{z}</option>)}</select></Campo>
+        <Campo etiqueta="Barrio / zona / municipio"><select value={f.zona} onChange={e => set('zona', e.target.value)}><option value="">Todas</option>{zonas.map(z => <option key={z}>{z}</option>)}</select></Campo>
         <Campo etiqueta="Habitaciones"><select value={f.hab} onChange={e => set('hab', e.target.value)}><option value="">Cualquiera</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+</option>)}</select></Campo>
       </div>
     </div></div>
